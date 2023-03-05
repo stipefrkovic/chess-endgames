@@ -10,10 +10,12 @@ class Variation:
         self.moves.append(move)
 
 
-def td_minimax(board, turn):
+def td_minimax(board, turn, depth, max_depth):
     outcome = board.outcome()
-    if outcome is not None:
-        if outcome.winner is None:
+    if depth is max_depth or outcome is not None:
+        if depth is max_depth:
+            evaluation = 0
+        elif outcome.winner is None:
             evaluation = 0
         elif outcome.winner is chess.WHITE:
             evaluation = 1
@@ -23,12 +25,11 @@ def td_minimax(board, turn):
             raise Exception("Error with outcome.")
         variation = Variation(evaluation, board.fen())
         return variation
-    # TODO depth
 
     variations = []
     for move in board.legal_moves():
         board.push(move)
-        variation = td_minimax(board, board.turn)
+        variation = td_minimax(board, board.turn, depth+1, max_depth)
         variations.append(variation)
         board.pop()
     if turn is chess.WHITE:
