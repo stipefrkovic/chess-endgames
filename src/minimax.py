@@ -48,7 +48,7 @@ def minimax(board, depth, max_depth, turn):
 def alphabeta(board, depth, max_depth, turn, alpha, beta):
     outcome = board.outcome()
     if depth is max_depth or outcome is not None:
-        if depth is max_depth:
+        if outcome is None:
             evaluation = 0
             # TODO add real evaluation
         elif outcome.winner is None:
@@ -91,16 +91,17 @@ def alphabeta(board, depth, max_depth, turn, alpha, beta):
 def main():
     mate_in_1 = "8/8/8/k1K5/8/1R6/8/8 w - - 0 1"
     mate_in_2 = "k7/8/2K5/8/8/1R6/8/8 w - - 0 1"
-    mate_in_3 = "8/k7/8/2K5/8/1R6/8/8 w - - 0 1"
+    mate_in_3_rook = "8/k7/8/2K5/8/1R6/8/8 w - - 0 1"
+    mate_in_3_queen = "8/k7/8/2K5/8/1Q6/8/8 w - - 0 1"
 
-    board = chess.Board(mate_in_2)
+    board = chess.Board(mate_in_3_queen)
     start_time = time.time()
-    principal_variation = minimax(board, 0, 5, chess.WHITE)
+    principal_variation = minimax(board, 0, 5, board.turn)
     print("Minimax - Time: %.4s, Evaluation: %s" % (time.time() - start_time, principal_variation.evaluation))
 
-    board = chess.Board(mate_in_2)
+    board = chess.Board(mate_in_3_queen)
     start_time = time.time()
-    principal_variation = alphabeta(board, 0, 5, chess.WHITE, -100, 100)
+    principal_variation = alphabeta(board, 0, 5, board.turn, -100, 100)
     print("Alphabeta - Time: %.4s, Evaluation: %s" % (time.time() - start_time, principal_variation.evaluation))
 
     # print(principal_variation.evaluation)
