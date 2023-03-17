@@ -2,6 +2,12 @@ import os
 import tensorflow as tf
 
 
+class Model:
+    # TODO implement
+    def predict(self, state):
+        return 0.5
+
+
 class MLP:
     def __init__(self, model_weights_path='weights/weights.h5'):
         self.model_weights_path = model_weights_path
@@ -43,3 +49,8 @@ class MLP:
 
     def save_weights(self):
         self.model.save_weights(self.model_weights_path)
+
+    def predict(self, x):
+        return self.model.predict(x)
+
+
