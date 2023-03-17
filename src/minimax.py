@@ -11,40 +11,38 @@ class Variation:
         self.moves.append(move)
 
 
-def minimax(board, depth, max_depth, turn):
-    outcome = board.outcome()
-    if depth is max_depth or outcome is not None:
-        if depth is max_depth:
-            evaluation = 0
-        elif outcome.winner is None:
-            evaluation = 0
-        elif outcome.winner is chess.WHITE:
-            evaluation = 1
-        elif outcome.winner is chess.BLACK:
-            evaluation = -1
-        else:
-            raise Exception("Error with outcome.")
-        variation = Variation(evaluation, board.fen())
-        return variation
+# def minimax(board, depth, max_depth, turn):
+#     outcome = board.outcome()
+#     if depth is max_depth or outcome is not None:
+#         if depth is max_depth:
+#             evaluation = 0
+#         elif outcome.winner is None:
+#             evaluation = 0
+#         elif outcome.winner is chess.WHITE:
+#             evaluation = 1
+#         elif outcome.winner is chess.BLACK:
+#             evaluation = -1
+#         else:
+#             raise Exception("Error with outcome.")
+#         variation = Variation(evaluation, board.fen())
+#         return variation
+#
+#     variations = []
+#     for move in board.legal_moves:
+#         board.push(move)
+#         variation = minimax(board, depth + 1, max_depth, board.turn)
+#         variations.append(variation)
+#         board.pop()
+#     if turn is chess.WHITE:
+#         principal_variation = max(variations, key=lambda x: x.evaluation)
+#     elif turn is chess.BLACK:
+#         principal_variation = min(variations, key=lambda x: x.evaluation)
+#     else:
+#         raise Exception("Error with turn.")
+#     principal_variation.add_move(board.fen())
+#     return principal_variation
 
-    variations = []
-    for move in board.legal_moves:
-        board.push(move)
-        variation = minimax(board, depth + 1, max_depth, board.turn)
-        variations.append(variation)
-        board.pop()
-    if turn is chess.WHITE:
-        principal_variation = max(variations, key=lambda x: x.evaluation)
-    elif turn is chess.BLACK:
-        principal_variation = min(variations, key=lambda x: x.evaluation)
-    else:
-        raise Exception("Error with turn.")
-    principal_variation.add_move(board.fen())
-    return principal_variation
 
-
-# TODO can this be extended such that if alpha or beta are best the search can stop?
-# TODO prefer shorter variations?
 def alphabeta(board, depth, max_depth, turn, alpha, beta):
     outcome = board.outcome()
     if depth is max_depth or outcome is not None:
@@ -94,10 +92,10 @@ def main():
     mate_in_3_rook = "8/k7/8/2K5/8/1R6/8/8 w - - 0 1"
     mate_in_3_queen = "8/k7/8/2K5/8/1Q6/8/8 w - - 0 1"
 
-    board = chess.Board(mate_in_3_queen)
-    start_time = time.time()
-    principal_variation = minimax(board, 0, 5, board.turn)
-    print("Minimax - Time: %.4s, Evaluation: %s" % (time.time() - start_time, principal_variation.evaluation))
+    # board = chess.Board(mate_in_3_queen)
+    # start_time = time.time()
+    # principal_variation = minimax(board, 0, 5, board.turn)
+    # print("Minimax - Time: %.4s, Evaluation: %s" % (time.time() - start_time, principal_variation.evaluation))
 
     board = chess.Board(mate_in_3_queen)
     start_time = time.time()
