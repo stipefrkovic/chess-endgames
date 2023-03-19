@@ -8,7 +8,7 @@ def compute_tds(model, variation):
     return tds
 
 
-def compute_fit_data(variation, tds, lambda_value):
+def compute_td_lambda_update(variation, tds, lambda_value):
     input_data = []
     output_data = []
     for state_idx, state in enumerate(variation.moves):

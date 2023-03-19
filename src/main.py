@@ -2,7 +2,7 @@ import time
 
 import chess
 
-from src.learning import compute_fit_data, compute_tds
+from src.learning import compute_td_lambda_update, compute_tds
 from src.models import Model
 from src.search import alphabeta
 from src.util import print_bitboard
@@ -29,7 +29,7 @@ def main():
     # Learning
     tds = compute_tds(model, principal_variation)
     print("Temporal differences: " + str(tds))
-    fit_data = compute_fit_data(principal_variation, tds, 0.95)
+    fit_data = compute_td_lambda_update(principal_variation, tds, 0.95)
     for i in range(len(fit_data[0])):
         print_bitboard(fit_data[0][i])
         print(fit_data[1][i])
