@@ -30,7 +30,6 @@ class MLP(Model):
                            loss=tf.keras.losses.MeanAbsoluteError,
                            )
 
-    # TODO figure out target value vs td-lambda thing
     def train(self, boards, td_values):
         early_stopping_callback = tf.keras.callbacks.EarlyStopping(
             monitor='loss',

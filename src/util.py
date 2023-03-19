@@ -1,4 +1,5 @@
 # TODO castling rights, side to play
+# TODO one np array, adjust print_bitboard accordingly
 def fen_to_bitboard(fen):
     new_row = '/'
     end_of_board = ' '
