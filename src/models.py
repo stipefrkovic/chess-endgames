@@ -8,8 +8,9 @@ class Model:
         return 0.5
 
 
-class MLP:
+class MLP(Model):
     def __init__(self, model_weights_path='weights/weights.h5'):
+        super().__init__()
         self.model_weights_path = model_weights_path
         self.model = None
 
@@ -53,5 +54,4 @@ class MLP:
 
     def predict(self, x):
         return self.model.predict(x)
-
 
