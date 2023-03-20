@@ -5,7 +5,7 @@ import chess
 from src.learning import compute_td_lambda_update, compute_tds
 from src.models import Model
 from src.search import alphabeta
-from src.util import print_bitboard
+from src.util import fen_to_bitboard
 
 
 def main():
@@ -17,6 +17,12 @@ def main():
 
     board = chess.Board(mate_in_1)
     model = Model()
+
+    # Util
+    bitboard = fen_to_bitboard(start_position)
+    for i in range(7):
+        print(i*64, (i+1)*64)
+        print(bitboard[i*64:(i+1)*64])
 
     # Search
     start_time = time.time()
@@ -31,7 +37,7 @@ def main():
     print("Temporal differences: " + str(tds))
     fit_data = compute_td_lambda_update(principal_variation, tds, 0.95)
     for i in range(len(fit_data[0])):
-        print_bitboard(fit_data[0][i])
+        print(fit_data[0][i])
         print(fit_data[1][i])
 
 

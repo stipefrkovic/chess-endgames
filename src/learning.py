@@ -8,7 +8,6 @@ def compute_tds(model, variation):
     return tds
 
 
-# TODO figure out target value vs td-lambda thing
 def compute_td_lambda_update(variation, tds, lambda_value):
     input_data = []
     output_data = []

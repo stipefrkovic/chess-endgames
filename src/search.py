@@ -1,5 +1,7 @@
 import chess
 
+from src.util import fen_to_bitboard
+
 
 class Variation:
     def __init__(self, evaluation, move):
@@ -47,7 +49,7 @@ def alphabeta(board, model, depth, max_depth, alpha, beta):
     if depth is max_depth or outcome is not None:
         if outcome is None:
             # TODO fen to bitboard
-            evaluation = model.predict(board.fen)
+            evaluation = model.predict(fen_to_bitboard(board.fen))
         elif outcome.winner is None:
             evaluation = 0
         elif outcome.winner is chess.WHITE:

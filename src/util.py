@@ -1,6 +1,8 @@
-# TODO castling rights, side to play
 # TODO one np array, adjust print_bitboard accordingly
-def fen_to_bitboard(fen):
+import numpy as np
+
+
+def fen_to_bitboard_deprecated(fen):
     new_row = '/'
     end_of_board = ' '
     empty_squares = '12345678'
@@ -28,11 +30,38 @@ def fen_to_bitboard(fen):
     return boards
 
 
-def print_bitboard(bitboard):
-    res_list = [0 for i in range(64)]
-    import operator
-    for b in bitboard:
-        for i in range(64):
-            res_list[i] = operator.add(res_list[i], b[i])
-    for i in range(8):
-        print(res_list[i*8:(i+1)*8])
+def fen_to_bitboard(fen):
+    boards = [[] for i in range(6)]
+    check_turn = False
+    end_of_pieces = ' '
+    next_row = '/'
+    empty_squares = '12345678'
+    pieces = 'kqrbnp'
+    for char in fen:
+        if check_turn:
+            bitboard = np.array(boards).flatten()
+            print(bitboard.shape)
+            if char == 'w':
+                bitboard = np.append(bitboard, 1)
+            else:
+                bitboard = np.append(bitboard, 0)
+            print(bitboard.shape)
+            return bitboard
+        elif char == end_of_pieces:
+            check_turn = True
+        elif char == next_row:
+            continue
+        elif char in empty_squares:
+            for board in boards:
+                board.extend([0] * int(char))
+        else:
+            piece_idx = pieces.lower().find(char)
+            piece_color = -1
+            if piece_idx == -1:
+                piece_idx = pieces.upper().find(char)
+                piece_color = 1
+            for board_idx, board in enumerate(boards):
+                if board_idx == piece_idx:
+                    board.append(piece_color)
+                else:
+                    board.append(0)
