@@ -10,6 +10,7 @@ def compute_evaluations(moves, model):
 
 
 def compute_tds(reward, evaluations):
+    evaluations = evaluations
     evaluations.append(reward)
     tds = [evaluations[i+1] - evaluations[i] for i in range(len(evaluations)-1)]
     return tds

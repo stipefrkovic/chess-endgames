@@ -1,23 +1,23 @@
 import os
 import tensorflow as tf
 
-from src.learning import compute_evaluations
-
 
 class MLP:
-    def __init__(self, model_weights_path='weights/weights.h5', epochs=20):
+    def __init__(self, model_weights_path='weights/weights.h5', epochs=50):
         super().__init__()
 
         self.model_weights_path = model_weights_path
         self.epochs = epochs
 
+        self.optimizer = tf.keras.optimizers.Adam()
+        self.loss = tf.keras.losses.MeanAbsoluteError()
         self.model = None
 
     def build(self):
         self.model = tf.keras.Sequential([
             tf.keras.layers.Dense(64, activation=tf.keras.activations.relu, input_shape=(384,)),
             tf.keras.layers.Dense(64, activation=tf.keras.activations.relu),
-            tf.keras.layers.Dense(1, activation=tf.keras.activations.sigmoid),
+            tf.keras.layers.Dense(1, activation=tf.keras.activations.tanh),
         ])
         print(self.model.summary())
 
@@ -26,11 +26,11 @@ class MLP:
             self.model.load_weights(self.model_weights_path)
 
     def compile(self):
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(),
-                           loss=tf.keras.losses.MeanSquaredError,
+        self.model.compile(optimizer=self.optimizer,
+                           loss=self.loss,
                            )
 
-    def train(self, bitboards, td_values):
+    def train_old(self, bitboards, td_values):
         early_stopping_callback = tf.keras.callbacks.EarlyStopping(
             monitor='loss',
             mode='min',
@@ -48,18 +48,16 @@ class MLP:
                        callbacks=callbacks_list,
                        )
 
-    def custom_train(self, input_states, target_values, lambda_td_values):
-        optimizer = tf.keras.optimizers.Adam()
-        loss = tf.keras.losses.MeanAbsoluteError()
+    def train(self, input_states, target_values, lambda_td_values):
         for epoch in range(self.epochs):
-            for input_state, target_value, td_value in zip(input_states, target_values, lambda_td_values):
+            for input_state, target_value, lambda_td_value in zip(input_states, target_values, lambda_td_values):
                 with tf.GradientTape() as tape:
                     predicted_value = self.model(input_state)
-                    loss_value = loss(target_value, predicted_value)
                     # print("Predicted, Target: %s, %s" % (predicted_value, target_value))
+                    loss_value = self.loss(target_value, predicted_value)
+                    loss_value *= lambda_td_value
                 gradients = tape.gradient(loss_value, self.model.trainable_weights)
-                # gradients *= td_value
-                optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
+                self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
 
     def save_weights(self):
         self.model.save_weights(self.model_weights_path)
