@@ -76,7 +76,6 @@ class MLP(Model):
         for epoch in range(self.epochs):
             input_states = inputs.copy()
             while len(input_states) > 0:
-
                 tds = td_learning.compute_tds(reward, evaluations)
                 # print("TDs: " + str(tds))
                 lambda_value = 0.95

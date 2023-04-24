@@ -41,6 +41,5 @@ def main():
     model.train(principal_variation)
 
 
-
 if __name__ == "__main__":
     main()
