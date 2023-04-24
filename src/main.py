@@ -2,10 +2,9 @@ import time
 
 import chess
 
-from src.learning import compute_lambda_tds, compute_tds, compute_evaluations
+from src.td_learning import compute_lambda_tds, compute_tds
 from src.models import MLP
 from src.search import alphabeta
-from src.util import fen_to_bitboard, fens_to_bitboards
 
 
 def main():
@@ -35,13 +34,14 @@ def main():
     print("Alphabeta - Time: %.4s" % end_time)
     print("PV - Evaluation: %s" % principal_variation.reward)
     print("PV - Moves: %s" % principal_variation.moves)
-    for move in principal_variation.moves:
-        print(chess.Board(move))
+    # for move in principal_variation.moves:
+    #     print(chess.Board(move))
 
     # Learning
-    moves = fens_to_bitboards(principal_variation.moves)
+    moves = MLP.fens_to_model_inputs(principal_variation.moves)
     print("Moves: " + str(len(moves)))
-    evaluations = compute_evaluations(moves, model)
+
+    evaluations = model.compute_evaluations(moves)
     print("Evaluations: " + str(evaluations))
     tds = compute_tds(principal_variation.reward, evaluations)
     print("TDs: " + str(tds))
@@ -53,7 +53,7 @@ def main():
 
     model.train(moves, targets, lambda_tds)
 
-    updated_evaluations = compute_evaluations(moves, model)
+    updated_evaluations = model.compute_evaluations(moves)
     print("Updated evaluations: " + str(updated_evaluations))
 
 

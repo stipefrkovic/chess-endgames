@@ -1,14 +1,3 @@
-from src.util import fen_to_bitboard
-
-
-def compute_evaluations(moves, model):
-    evaluations = []
-    for move in moves:
-        evaluation = model.predict(move)
-        evaluations.append(evaluation)
-    return evaluations
-
-
 def compute_tds(reward, evaluations):
     evaluations = evaluations
     evaluations.append(reward)

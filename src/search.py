@@ -1,7 +1,5 @@
 import chess
 
-from src.util import fen_to_bitboard
-
 
 class Variation:
     def __init__(self, reward, move):
@@ -12,45 +10,13 @@ class Variation:
         self.moves.insert(0, move)
 
 
-# def minimax(board, depth, max_depth, turn):
-#     outcome = board.outcome()
-#     if depth is max_depth or outcome is not None:
-#         if depth is max_depth:
-#             evaluation = 0
-#         elif outcome.winner is None:
-#             evaluation = 0
-#         elif outcome.winner is chess.WHITE:
-#             evaluation = 1
-#         elif outcome.winner is chess.BLACK:
-#             evaluation = -1
-#         else:
-#             raise Exception("Error with outcome.")
-#         variation = Variation(evaluation, board.fen())
-#         return variation
-#
-#     variations = []
-#     for move in board.legal_moves:
-#         board.push(move)
-#         variation = minimax(board, depth + 1, max_depth, board.turn)
-#         variations.append(variation)
-#         board.pop()
-#     if turn is chess.WHITE:
-#         principal_variation = max(variations, key=lambda x: x.evaluation)
-#     elif turn is chess.BLACK:
-#         principal_variation = min(variations, key=lambda x: x.evaluation)
-#     else:
-#         raise Exception("Error with turn.")
-#     principal_variation.add_move(board.fen())
-#     return principal_variation
-
-
 def alphabeta(board, model, depth, max_depth, alpha, beta):
     outcome = board.outcome()
     if depth is max_depth or outcome is not None:
         if outcome is None:
             board_fen = board.fen()
-            board_bitboard = fen_to_bitboard(board_fen)
-            reward = model.predict(board_bitboard)
+            board_input = model.fen_to_model_input(board_fen)
+            reward = model.predict(board_input)
         elif outcome.winner is None:
             reward = 0
         elif outcome.winner is chess.WHITE:

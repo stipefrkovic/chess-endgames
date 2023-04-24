@@ -29,7 +29,19 @@ def td_lambda_gradient_test_2():
     print("Layer weights: " + str(layer.get_weights()))
 
     dy_dx = tape.gradient(y, layer.trainable_weights)
-    print("Gradients:" + str(dy_dx))
+    print("Gradients y:" + str(dy_dx))
+
+    with tf.GradientTape() as tape:
+        y = layer(x)
+        print("Output: " + str(y))
+        # loss = tf.reduce_mean(y ** 2)
+        # print("Loss: " + str(loss))
+        z = y * 2
+
+    print("Layer weights: " + str(layer.get_weights()))
+
+    dz_dx = tape.gradient(z, layer.trainable_weights)
+    print("Gradients z:" + str(dz_dx))
 
     optimizer = tf.keras.optimizers.SGD(learning_rate=1)
     optimizer.apply_gradients(zip(dy_dx, layer.trainable_weights))
