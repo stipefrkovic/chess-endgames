@@ -38,23 +38,8 @@ def main():
     #     print(chess.Board(move))
 
     # Learning
-    moves = MLP.fens_to_model_inputs(principal_variation.moves)
-    print("Moves: " + str(len(moves)))
+    model.train(principal_variation)
 
-    evaluations = model.compute_evaluations(moves)
-    print("Evaluations: " + str(evaluations))
-    tds = compute_tds(principal_variation.reward, evaluations)
-    print("TDs: " + str(tds))
-    lambda_value = 0.95
-    lambda_tds = compute_lambda_tds(moves, tds, lambda_value)
-    print("Lambda TDs: " + str(lambda_tds))
-    targets = [principal_variation.reward] * len(moves)
-    print("Targets: " + str(targets))
-
-    model.train(moves, targets, lambda_tds)
-
-    updated_evaluations = model.compute_evaluations(moves)
-    print("Updated evaluations: " + str(updated_evaluations))
 
 
 if __name__ == "__main__":

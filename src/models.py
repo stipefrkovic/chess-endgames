@@ -3,6 +3,8 @@ import os
 import numpy as np
 import tensorflow as tf
 
+from src import td_learning
+
 
 class Model:
     def __init__(self):
@@ -66,14 +68,30 @@ class MLP(Model):
                        callbacks=callbacks_list,
                        )
 
-    def train(self, input_states, target_values, lambda_td_values):
+    def train(self, variation):
+        inputs = MLP.fens_to_model_inputs(variation.moves)
+        evaluations = self.compute_evaluations(inputs)
+        print("Evaluations: " + str(evaluations))
+        reward = variation.reward
         for epoch in range(self.epochs):
-            for input_state, target_value, lambda_td_value in zip(input_states, target_values, lambda_td_values):
+            input_states = inputs.copy()
+            while len(input_states) > 0:
+
+                tds = td_learning.compute_tds(reward, evaluations)
+                # print("TDs: " + str(tds))
+                lambda_value = 0.95
+                lambda_td = td_learning.compute_lambda_td(tds, lambda_value)
+                # print("Lambda TD: " + str(lambda_td))
+                input_state = input_states.pop(0)
+
                 with tf.GradientTape() as tape:
                     predicted_value = self.model(input_state)
-                    predicted_value *= -lambda_td_value
+                    predicted_value *= -lambda_td
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
+
+        updated_evaluations = self.compute_evaluations(inputs)
+        print("Updated evaluations: " + str(updated_evaluations))
 
     def save_weights(self):
         self.model.save_weights(self.model_weights_path)
