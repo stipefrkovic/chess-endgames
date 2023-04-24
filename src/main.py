@@ -35,8 +35,8 @@ def main():
     print("Alphabeta - Time: %.4s" % end_time)
     print("PV - Evaluation: %s" % principal_variation.reward)
     print("PV - Moves: %s" % principal_variation.moves)
-    # for move in principal_variation.moves:
-    #     print(chess.Board(move))
+    for move in principal_variation.moves:
+        print(chess.Board(move))
 
     # Learning
     moves = fens_to_bitboards(principal_variation.moves)
