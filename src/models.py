@@ -71,7 +71,7 @@ class MLP(Model):
     def train(self, variation):
         inputs = MLP.fens_to_model_inputs(variation.moves)
         evaluations = self.compute_evaluations(inputs)
-        print("Evaluations: " + str(evaluations))
+        print("Model's evaluations: " + str(evaluations))
         reward = variation.reward
         for epoch in range(self.epochs):
             input_states = inputs.copy()
@@ -90,7 +90,7 @@ class MLP(Model):
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
 
         updated_evaluations = self.compute_evaluations(inputs)
-        print("Updated evaluations: " + str(updated_evaluations))
+        print("Updated model's evaluations: " + str(updated_evaluations))
 
     def save_weights(self):
         self.model.save_weights(self.model_weights_path)
