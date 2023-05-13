@@ -24,7 +24,7 @@ class Model:
 
 
 class MLP(Model):
-    def __init__(self, model_weights_path='weights/weights.h5', steps=5):
+    def __init__(self, model_weights_path='weights/weights.h5', steps=15):
         super().__init__()
 
         self.model_weights_path = model_weights_path
@@ -71,18 +71,19 @@ class MLP(Model):
     def train(self, variation):
         inputs = MLP.fens_to_model_inputs(variation.moves)
         evaluations = self.compute_evaluations(inputs)
-        print("Model's evaluations: " + str(evaluations))
+        print("Model's old evaluations: " + str(evaluations))
         reward = variation.reward
         for step in range(self.steps):
             input_states = inputs.copy()
             while len(input_states) > 0:
+                print(f"inputs: {len(input_states)}")
+                evaluations = self.compute_evaluations(input_states)
                 tds = td_learning.compute_tds(reward, evaluations)
-                # print("TDs: " + str(tds))
+                print(f"tds: {tds}")
                 lambda_value = 0.95
                 lambda_td = td_learning.compute_lambda_td(tds, lambda_value)
-                # print("Lambda TD: " + str(lambda_td))
+                print(f"lambda_td: {lambda_td}")
                 input_state = input_states.pop(0)
-
                 with tf.GradientTape() as tape:
                     predicted_value = self.model(input_state)
                     predicted_value *= -lambda_td
@@ -90,7 +91,7 @@ class MLP(Model):
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
 
         updated_evaluations = self.compute_evaluations(inputs)
-        print("Updated model's evaluations: " + str(updated_evaluations))
+        print("Model's new evaluations: " + str(updated_evaluations))
 
     def save_weights(self):
         self.model.save_weights(self.model_weights_path)
