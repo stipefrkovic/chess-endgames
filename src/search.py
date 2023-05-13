@@ -1,6 +1,5 @@
 import chess
 
-
 class Variation:
     def __init__(self, reward, move):
         self.reward = reward
