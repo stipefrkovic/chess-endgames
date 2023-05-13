@@ -1,3 +1,5 @@
+import chess
+
 def td_lambda_gradient_test():
     import tensorflow as tf
 
@@ -50,8 +52,7 @@ def td_lambda_gradient_test_2():
 
 
 def main():
-    td_lambda_gradient_test_2()
-
+    print("no test")
 
 if __name__ == "__main__":
     main()

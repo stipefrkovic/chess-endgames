@@ -3,7 +3,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from src import td_learning
+import td_learning
 
 
 class Model:
@@ -24,11 +24,11 @@ class Model:
 
 
 class MLP(Model):
-    def __init__(self, model_weights_path='weights/weights.h5', epochs=50):
+    def __init__(self, model_weights_path='weights/weights.h5', steps=5):
         super().__init__()
 
         self.model_weights_path = model_weights_path
-        self.epochs = epochs
+        self.steps = steps
 
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss = tf.keras.losses.MeanAbsoluteError()
@@ -73,7 +73,7 @@ class MLP(Model):
         evaluations = self.compute_evaluations(inputs)
         print("Model's evaluations: " + str(evaluations))
         reward = variation.reward
-        for epoch in range(self.epochs):
+        for step in range(self.steps):
             input_states = inputs.copy()
             while len(input_states) > 0:
                 tds = td_learning.compute_tds(reward, evaluations)

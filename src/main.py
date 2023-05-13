@@ -1,28 +1,24 @@
 import time
-
 import chess
 
-from src.td_learning import compute_lambda_tds, compute_tds
-from src.models import MLP
-from src.search import alphabeta
-
+from models import MLP
+from search import alphabeta
+from position import create_random_position
 
 def main():
-    mate_in_1 = "8/8/8/k1K5/8/1R6/8/8 w - - 0 1"
-    other_mate_in_1 = "3r2k1/4Qp2/5P1p/2p3p1/3q4/8/P1B1R1PP/4K3 b - - 6 28"
-    mate_in_2 = "k7/8/2K5/8/8/1R6/8/8 w - - 0 1"
-    other_mate_in_2 = "4rk1r/3R1ppp/p2p4/1p1p2B1/3q1P2/3B4/PPP3PP/2K1R3 w - - 2 18"
-    mate_in_3_rook = "8/k7/8/2K5/8/1R6/8/8 w - - 0 1"
-    mate_in_3_queen = "8/k7/8/2K5/8/1Q6/8/8 w - - 0 1"
-    start_position = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
-
-    positions = [other_mate_in_2, other_mate_in_1]
-
     model = MLP()
     model.build()
+    
+    Krk_pieces = [
+        chess.Piece(chess.KING, chess.WHITE),
+        chess.Piece(chess.ROOK, chess.BLACK),
+        chess.Piece(chess.KING, chess.BLACK),
+    ]
+    Krk_turn = False
+    Krk_endgames = [create_random_position(Krk_pieces, Krk_turn) for i in range(1)]
 
-    for position in positions:
-        board = chess.Board(position)
+    for endgame in Krk_endgames:
+        board = chess.Board(endgame)
         print("Board:\n" + str(board))
         # Util
         # bitboard = fen_to_bitboard(board.fen())
