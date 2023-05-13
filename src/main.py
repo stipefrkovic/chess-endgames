@@ -3,7 +3,7 @@ import chess
 
 from models import MLP
 from search import alphabeta
-from position import create_random_position
+from position import create_random_position, mate_in_2
 
 def main():
     model = MLP()
@@ -16,6 +16,7 @@ def main():
     ]
     Krk_turn = False
     Krk_endgames = [create_random_position(Krk_pieces, Krk_turn) for i in range(1)]
+    # Krk_endgames = [mate_in_2]
 
     for endgame in Krk_endgames:
         board = chess.Board(endgame)

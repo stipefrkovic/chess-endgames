@@ -24,12 +24,11 @@ class Model:
 
 
 class MLP(Model):
-    def __init__(self, model_weights_path='weights/weights.h5', steps=15):
+    def __init__(self, model_weights_path='weights/weights.h5'):
         super().__init__()
-
+        
         self.model_weights_path = model_weights_path
-        self.steps = steps
-
+        
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss = tf.keras.losses.MeanAbsoluteError()
 
@@ -45,42 +44,19 @@ class MLP(Model):
         if os.path.isfile(self.model_weights_path):
             self.model.load_weights(self.model_weights_path)
 
-    def compile(self):
-        self.model.compile(optimizer=self.optimizer,
-                           loss=self.loss,
-                           )
-
-    def train_old(self, bitboards, td_values):
-        early_stopping_callback = tf.keras.callbacks.EarlyStopping(
-            monitor='loss',
-            mode='min',
-            verbose=1,
-            patience=5)
-        model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-            filepath=self.model_weights_path,
-            save_weights_only=True,
-            monitor='loss',
-            mode='min',
-            save_best_only=True)
-        callbacks_list = [early_stopping_callback]
-        self.model.fit(bitboards, td_values,
-                       epochs=50,
-                       callbacks=callbacks_list,
-                       )
-
-    def train(self, variation):
+    def train(self, variation, steps=20, lambda_value=0.9):
         inputs = MLP.fens_to_model_inputs(variation.moves)
         evaluations = self.compute_evaluations(inputs)
         print("Model's old evaluations: " + str(evaluations))
         reward = variation.reward
-        for step in range(self.steps):
+        for step in range(steps):
             input_states = inputs.copy()
             while len(input_states) > 0:
                 print(f"inputs: {len(input_states)}")
                 evaluations = self.compute_evaluations(input_states)
+                print(f"evaluations: {evaluations}")
                 tds = td_learning.compute_tds(reward, evaluations)
                 print(f"tds: {tds}")
-                lambda_value = 0.95
                 lambda_td = td_learning.compute_lambda_td(tds, lambda_value)
                 print(f"lambda_td: {lambda_td}")
                 input_state = input_states.pop(0)
@@ -89,7 +65,6 @@ class MLP(Model):
                     predicted_value *= -lambda_td
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
-
         updated_evaluations = self.compute_evaluations(inputs)
         print("Model's new evaluations: " + str(updated_evaluations))
 
