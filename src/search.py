@@ -14,13 +14,14 @@ class Variation:
     def get_reward(self):
         return self.reward
 
+# TODO create class State
 
 class ChessState():
     def __init__(self, board):
         self.board = board
 
     def get_string(self):
-        return str(self.board)
+        return self.board.fen()
 
     def copy(self):
         return ChessState(self.board.copy())
@@ -42,7 +43,7 @@ class ChessState():
 
     def get_reward(self, outcome, model):
         if outcome is None:
-            model_input = model.fen_to_model_input(self.get_fen())
+            model_input = model.fen_to_model_input(self.get_string())
             reward = model.predict(model_input)
         elif outcome.winner is None:
             reward = 0
@@ -53,12 +54,9 @@ class ChessState():
         else:
             raise Exception("Error with outcome.")
         return reward
-    
-    def get_fen(self):
-        return self.board.fen()
 
 
-class AlphaBeta:   
+class AlphaBeta:
     def run(self, state, model, depth, max_depth, alpha, beta):
         outcome = state.get_outcome()
         if depth is max_depth or outcome is not None:

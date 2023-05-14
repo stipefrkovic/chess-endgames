@@ -1,8 +1,9 @@
 import random
 import chess
 import time
+from matplotlib import pyplot as plt
+from pathlib import Path
 
-from learning import ChessMLP
 from search import AlphaBeta, ChessState
 
 start_state = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
@@ -14,39 +15,40 @@ white_mate_in_3_rook = "8/k7/8/2K5/8/1R6/8/8 w - - 0 1"
 white_mate_in_3_queen = "8/k7/8/2K5/8/1Q6/8/8 w - - 0 1"
 black_mate_in_2 = "K7/8/2k5/8/8/1r6/8/8 b - - 0 1"
 
+
 class Experiment:
     def __init__(self, max_depth, train_steps, lambda_value):
         self.max_depth = max_depth
         self.train_steps = train_steps
         self.lambda_value = lambda_value
 
-    def print_state(self, state):
-        pass
+    def run(self, model, start_state, train=True):
+        # Search
+        # print(f"Start state:\n{start_state.get_string()}")
+        start_time = time.time()
+        alpha_beta = AlphaBeta()
+        principal_variation = alpha_beta.run(
+            state=start_state,
+            model=model,
+            depth=0,
+            max_depth=self.max_depth,
+            alpha=-100,
+            beta=100
+        )
+        end_time = time.time() - start_time
+        # print("AlphaBeta Time: %.4s" % end_time)
+        print(f"PV Reward: {principal_variation.reward}")
+        print(f"PV States: {[state.get_string() for state in principal_variation.states]}")
+        # for state_idx, state in enumerate(principal_variation.states):
+        #     print(f"State {state_idx}:\n{state.get_string()}")
 
-    def run(self, model, start_states):
-        for start_state in start_states:
-            # Search
-            print(f"Start state:\n{start_state.get_string()}")
-            start_time = time.time()
-            alpha_beta = AlphaBeta()
-            principal_variation = alpha_beta.run(
-                state=start_state,
-                model=model,
-                depth=0,
-                max_depth=self.max_depth,
-                alpha=-100,
-                beta=100
-            )
-            end_time = time.time() - start_time
-            print("Alphabeta - Time: %.4s" % end_time)
-            print("Principal Variation - Evaluation: %s" % principal_variation.reward)
-            for state_idx, state in enumerate(principal_variation.states):
-                print(f"State {state_idx}:\n{state.get_string()}")
-
-            # Learning
+        # Learning
+        if train:
             model.train(principal_variation,
                         steps=self.train_steps,
                         lambda_value=self.lambda_value)
+        
+        return principal_variation.reward
 
 class ChessExperiment(Experiment):
     def __init__(self, max_depth, train_steps, lambda_value):
@@ -74,16 +76,16 @@ class ChessExperiment(Experiment):
 
 
 class RookEndgamesExperiment(ChessExperiment):
-    def __init__(self, max_depth, train_steps, lambda_value, iterations):
+    def __init__(self, max_depth, train_steps, lambda_value):
         super().__init__(max_depth, train_steps, lambda_value)
-        self.iterations = iterations
 
     def run(self, model):
-        start_states = [ChessState(chess.Board(white_mate_in_2_2)), ChessState(chess.Board(black_mate_in_2))]
-        # start_states = []
-        for i in range(self.iterations):
-            start_states.append(ChessState(self.create_random_king_rook_endgame()))
-        super().run(model, start_states)
+        rook_endgame_board = self.create_random_king_rook_endgame()
+        start_state = ChessState(rook_endgame_board)
+        real_eval = 1 if rook_endgame_board.turn else -1
+        pv_reward = super().run(model, start_state)
+        abs_loss = abs(real_eval - pv_reward)
+        return abs_loss
 
     def create_random_king_rook_endgame(self):
         rooks = [chess.Piece(chess.ROOK, chess.WHITE),
@@ -93,16 +95,30 @@ class RookEndgamesExperiment(ChessExperiment):
 
 
 class ExperimentRunner:
-    def __init__(self):
-        self.model = None
+    def __init__(self, model, figures_path='/src/figures/'):
+        self.model = model
+        self.figures_path = str(Path().absolute()) + figures_path
 
-    def set_up(self):
-        self.model = ChessMLP()
+    def set_up(self, load_weights=True):
         self.model.build()
-        self.model.load_weights()
+        if load_weights:
+            self.model.load_weights()
 
-    def wrap_up(self):
-        self.model.save_weights()
+    def wrap_up(self, save_weights=True):
+        if save_weights:
+            self.model.save_weights()
 
-    def run_experiment(self, experiment):
-        experiment.run(self.model)
+    def run_experiments(self, experiment, iterations):
+        abs_losses = []
+        for i in range(iterations):
+            print(f"Experiment Idx: {i}")
+            abs_losses.append(experiment.run(self.model))
+        self.plot_losses(abs_losses)
+
+    def plot_losses(self, losses, ylim=(-0.2, 1.2)):
+        plt.plot(range(len(losses)), losses)
+        plt.xlabel('Experiment')
+        plt.ylabel('Loss')
+        plt.ylim(ylim[0], ylim[1])
+        # plt.show()
+        plt.savefig(self.figures_path+'losses.png')
