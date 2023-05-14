@@ -3,9 +3,9 @@ import chess
 import time
 
 from learning import ChessMLP
-from search import alphabeta
+from search import ChessAlphaBeta
 
-start_position = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
+start_state = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
 white_mate_in_1_1 = "8/8/8/k1K5/8/1R6/8/8 w - - 0 1"
 white_mate_in_1_2 = "3r2k1/4Qp2/5P1p/2p3p1/3q4/8/P1B1R1PP/4K3 b - - 6 28"
 white_mate_in_2_1 = "k7/8/2K5/8/8/1R6/8/8 w - - 0 1"
@@ -21,18 +21,16 @@ class ChessExperiment:
         self.train_steps = train_steps
         self.lambda_value = lambda_value
 
-    def run(self, positions, model):
-        for position in positions:
+    def run(self, start_states, model):
+        for start_state in start_states:
             # Search
-            print(f"Start Position: {position}")
-            board = chess.Board(position)
+            print(f"Start Position: {start_state}")
+            board = chess.Board(start_state)
             # print("Board:\n" + str(board))
 
-            # for i in range(6):
-            #     print(i*64, (i+1)*64)
-            #     print(bitboard[i*64:(i+1)*64])
             start_time = time.time()
-            principal_variation = alphabeta(
+            chess_alpha_beta = ChessAlphaBeta()
+            principal_variation = chess_alpha_beta.run(
                 board=board,
                 model=model,
                 depth=0,
@@ -43,9 +41,6 @@ class ChessExperiment:
             end_time = time.time() - start_time
             print("Alphabeta - Time: %.4s" % end_time)
             print("Principal Variation - Evaluation: %s" % principal_variation.reward)
-            # print("Principal Variation - Moves: %s" % principal_variation.moves)
-            # for move in principal_variation.moves:
-            #     print(chess.Board(move))
 
             # Learning
             model.train(principal_variation,
@@ -53,7 +48,7 @@ class ChessExperiment:
                         lambda_value=self.lambda_value)
 
     @staticmethod
-    def create_random_chess_position(non_king_pieces, turn):
+    def create_random_chess_board(non_king_pieces, turn):
         kings = [chess.Piece(chess.KING, chess.WHITE),
                  chess.Piece(chess.KING, chess.BLACK)]
         pieces = kings + non_king_pieces
@@ -80,16 +75,16 @@ class RookEndgamesExperiment(ChessExperiment):
         self.iterations = iterations
 
     def run(self, model):
-        positions = []
+        start_states = []
         for i in range(self.iterations):
-            positions.append(self.create_random_king_rook_endgame())
-        super().run(positions, model)
+            start_states.append(self.create_random_king_rook_endgame())
+        super().run(start_states, model)
 
     def create_random_king_rook_endgame(self):
         rooks = [chess.Piece(chess.ROOK, chess.WHITE),
                  chess.Piece(chess.ROOK, chess.BLACK)]
         random_rook = random.choice(rooks)
-        return super().create_random_chess_position([random_rook], random_rook.color)
+        return super().create_random_chess_board([random_rook], random_rook.color)
 
 
 class ExperimentRunner:

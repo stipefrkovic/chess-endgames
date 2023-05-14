@@ -12,8 +12,8 @@ def compute_tds(reward, evaluations):
 
 def compute_lambda_tds(tds, lambda_value):
     lambda_tds = []
-    for moves_idx in range(len(tds)):
-        lambda_tds.append(compute_lambda_td(tds[moves_idx:], lambda_value))
+    for state_idx in range(len(tds)):
+        lambda_tds.append(compute_lambda_td(tds[state_idx:], lambda_value))
     return lambda_tds
 
 
@@ -103,7 +103,7 @@ class ChessMLP(MLP):
         print(self.model.summary())
 
     def variation_to_inputs(self, variation):
-        return ChessMLP.fens_to_model_inputs(variation.moves)
+        return ChessMLP.fens_to_model_inputs(variation.states)
 
     @staticmethod
     def fens_to_model_inputs(fens):
