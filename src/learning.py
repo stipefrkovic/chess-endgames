@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 
+from my_logger import logger
 
 def compute_tds(reward, evaluations):
     evaluations = evaluations
@@ -34,11 +35,17 @@ class Model:
         pass
 
     def load_weights(self):
+        logger.info("Attempting to load model")
         if os.path.isfile(self.model_weights_path):
             self.model.load_weights(self.model_weights_path)
+            logger.info("Loaded model")
+        else:
+            logger.info("Model not found")
 
     def save_weights(self):
+        logger.info("Attempting to save weights")
         self.model.save_weights(self.model_weights_path)
+        logger.info("Saved weights")
 
     def train(self, variation, steps, lambda_value):
         pass
@@ -68,26 +75,25 @@ class MLP(Model):
     def train(self, variation, steps, lambda_value):
         inputs = self.variation_to_inputs(variation)
         evaluations = self.evaluate_inputs(inputs)
-        print(f"Model Old Evals: {evaluations}")
+        # logger.info(f"Model Old Evals: {evaluations}")
         reward = variation.get_reward()
         for step in range(steps):
             input_states = inputs.copy()
             while len(input_states) > 0:
-                # print(f"inputs: {len(input_states)}")
                 evaluations = self.evaluate_inputs(input_states)
-                # print(f"evaluations: {evaluations}")
+                # logger.debug(f"evaluations: {evaluations}")
                 tds = compute_tds(reward, evaluations)
-                # print(f"tds: {tds}")
+                # logger.debug(f"tds: {tds}")
                 lambda_td = compute_lambda_td(tds, lambda_value)
-                # print(f"lambda_td: {lambda_td}")
+                # logger.debug(f"lambda_td: {lambda_td}")
                 input_state = input_states.pop(0)
                 with tf.GradientTape() as tape:
                     predicted_value = self.model(input_state)
                     predicted_value *= -lambda_td
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
-        updated_evaluations = self.evaluate_inputs(inputs)
-        print(f"Model New Evals: {updated_evaluations}")
+        # updated_evaluations = self.evaluate_inputs(inputs)
+        # logger.info(f"Model New Evals: {updated_evaluations}")
 
 
 class ChessMLP(MLP):
@@ -100,7 +106,7 @@ class ChessMLP(MLP):
             tf.keras.layers.Dense(64, activation=tf.keras.activations.relu),
             tf.keras.layers.Dense(1, activation=tf.keras.activations.tanh),
         ])
-        print(self.model.summary())
+        logger.debug(f"Model Summary:\n{str(self.model.summary())}")
 
     def variation_to_inputs(self, variation):
         return self.chess_states_to_model_inputs(variation.get_states())
@@ -121,9 +127,6 @@ class ChessMLP(MLP):
                 inp = np.array(boards).reshape((1, 384))
                 if char == 'b':
                     inp = inp * -1
-                # for i in range(6):
-                    #     print(i*64, (i+1)*64)
-                    #     print(inp[i*64:(i+1)*64])
                 return inp
             elif char == end_of_pieces:
                 check_turn = True

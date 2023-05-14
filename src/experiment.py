@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from pathlib import Path
 
 from search import AlphaBeta, ChessState
+from my_logger import logger
 
 start_state = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
 white_mate_in_1_1 = "8/8/8/k1K5/8/1R6/8/8 w - - 0 1"
@@ -22,9 +23,9 @@ class Experiment:
         self.train_steps = train_steps
         self.lambda_value = lambda_value
 
-    def run(self, model, start_state, train=True):
+    def run(self, model, start_state, train):
         # Search
-        # print(f"Start state:\n{start_state.get_string()}")
+        # logger.debug(f"Start state:\n{start_state.get_string()}")
         start_time = time.time()
         alpha_beta = AlphaBeta()
         principal_variation = alpha_beta.run(
@@ -36,11 +37,10 @@ class Experiment:
             beta=100
         )
         end_time = time.time() - start_time
-        # print("AlphaBeta Time: %.4s" % end_time)
-        print(f"PV Reward: {principal_variation.reward}")
-        print(f"PV States: {[state.get_string() for state in principal_variation.states]}")
+        # logger.debug(f"AlphaBeta Time: {end_time:.4f}")
+        # logger.info(f"PV Reward: {principal_variation.reward}")
         # for state_idx, state in enumerate(principal_variation.states):
-        #     print(f"State {state_idx}:\n{state.get_string()}")
+        #     logger.info(f"PV State {state_idx}: {state.get_string()}")
 
         # Learning
         if train:
@@ -53,6 +53,12 @@ class Experiment:
 class ChessExperiment(Experiment):
     def __init__(self, max_depth, train_steps, lambda_value):
         super().__init__(max_depth, train_steps, lambda_value)
+
+    def run(self, model, start_state, train):
+        real_eval = 1 if start_state.is_max_turn() else -1
+        pv_reward = super().run(model, start_state, train)
+        abs_loss = abs(real_eval - pv_reward)
+        return abs_loss
 
     def create_random_chess_board(self, non_king_pieces, turn):
         kings = [chess.Piece(chess.KING, chess.WHITE),
@@ -75,23 +81,36 @@ class ChessExperiment(Experiment):
         return board
 
 
-class RookEndgamesExperiment(ChessExperiment):
+class RookEndgameExperiment(ChessExperiment):
     def __init__(self, max_depth, train_steps, lambda_value):
         super().__init__(max_depth, train_steps, lambda_value)
 
-    def run(self, model):
-        rook_endgame_board = self.create_random_king_rook_endgame()
+    def run(self, model, train=True):
+        rook_endgame_board = self.create_random_rook_endgame()
         start_state = ChessState(rook_endgame_board)
-        real_eval = 1 if rook_endgame_board.turn else -1
-        pv_reward = super().run(model, start_state)
-        abs_loss = abs(real_eval - pv_reward)
-        return abs_loss
+        return super().run(model, start_state, train)
 
-    def create_random_king_rook_endgame(self):
+    def create_random_rook_endgame(self):
         rooks = [chess.Piece(chess.ROOK, chess.WHITE),
                  chess.Piece(chess.ROOK, chess.BLACK)]
         random_rook = random.choice(rooks)
         return super().create_random_chess_board([random_rook], random_rook.color)
+    
+
+class QueenEndgameExperiment(ChessExperiment):
+    def __init__(self, max_depth, train_steps, lambda_value):
+        super().__init__(max_depth, train_steps, lambda_value)
+
+    def run(self, model, train=True):
+        queen_endgame_board = self.create_random_queen_endgame()
+        start_state = ChessState(queen_endgame_board)
+        return super().run(model, start_state, train)
+
+    def create_random_queen_endgame(self):
+        queens = [chess.Piece(chess.QUEEN, chess.WHITE),
+                 chess.Piece(chess.QUEEN, chess.BLACK)]
+        queen = random.choice(queens)
+        return super().create_random_chess_board([queen], queen.color)
 
 
 class ExperimentRunner:
@@ -108,17 +127,20 @@ class ExperimentRunner:
         if save_weights:
             self.model.save_weights()
 
-    def run_experiments(self, experiment, iterations):
-        abs_losses = []
+    def run_experiments(self, experiment_name, experiment, iterations):
+        losses = []
         for i in range(iterations):
-            print(f"Experiment Idx: {i}")
-            abs_losses.append(experiment.run(self.model))
-        self.plot_losses(abs_losses)
+            logger.info(f"{experiment_name} {i}")
+            losses.append(experiment.run(self.model))
+        # logger.info(f"Losses: {losses}")
+        self.plot_losses(experiment_name, losses)
 
-    def plot_losses(self, losses, ylim=(-0.2, 1.2)):
-        plt.plot(range(len(losses)), losses)
+    def plot_losses(self, name, losses, ylim=(-0.05, 1.05)):
+        fig, ax = plt.subplots()
+        ax.plot(range(len(losses)), losses)
+        plt.xticks(range(len(losses)))
         plt.xlabel('Experiment')
         plt.ylabel('Loss')
         plt.ylim(ylim[0], ylim[1])
         # plt.show()
-        plt.savefig(self.figures_path+'losses.png')
+        fig.savefig(self.figures_path + name + '.png')
