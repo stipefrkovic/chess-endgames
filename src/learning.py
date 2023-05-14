@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 
+
 def compute_tds(reward, evaluations):
     evaluations = evaluations
     evaluations.append(reward)
@@ -62,14 +63,13 @@ class MLP(Model):
     def __init__(self, model_weights_path):
         super().__init__(model_weights_path)
         
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
     def train(self, variation, steps, lambda_value):
-        print("cool")
         inputs = self.variation_to_inputs(variation)
         evaluations = self.evaluate_inputs(inputs)
         print("Model's old evaluations: " + str(evaluations))
-        reward = variation.reward
+        reward = variation.get_reward()
         for step in range(steps):
             input_states = inputs.copy()
             while len(input_states) > 0:
@@ -103,15 +103,13 @@ class ChessMLP(MLP):
         print(self.model.summary())
 
     def variation_to_inputs(self, variation):
-        return ChessMLP.fens_to_model_inputs(variation.states)
+        return self.chess_states_to_model_inputs(variation.get_states())
 
-    @staticmethod
-    def fens_to_model_inputs(fens):
-        inputs = [ChessMLP.fen_to_model_input(fen) for fen in fens]
+    def chess_states_to_model_inputs(self, chess_states):
+        inputs = [self.fen_to_model_input(chess_state.get_fen()) for chess_state in chess_states]
         return inputs
 
-    @staticmethod
-    def fen_to_model_input(fen):
+    def fen_to_model_input(self, fen):
         boards = [[] for i in range(6)]
         check_turn = False
         end_of_pieces = ' '

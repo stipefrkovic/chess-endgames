@@ -8,20 +8,42 @@ class Variation:
     def add_state(self, state):
         self.states.insert(0, state)
 
+    def get_states(self):
+        return self.states
+    
+    def get_reward(self):
+        return self.reward
+
 
 class ChessState():
     def __init__(self, board):
         self.board = board
+
+    def get_string(self):
+        return str(self.board)
+
+    def copy(self):
+        return ChessState(self.board.copy())
     
-    def outcome(self):
+    def is_max_turn(self):
+        return self.board.turn is chess.WHITE
+    
+    def get_actions(self):
+        return self.board.legal_moves
+    
+    def do_action(self, action):
+        self.board.push(action)
+
+    def undo_action(self):
+        return self.board.pop()
+    
+    def get_outcome(self):
         return self.board.outcome()
 
-class AlphaBeta:
-    def outcome_reward(self, outcome):
+    def get_reward(self, outcome, model):
         if outcome is None:
-            board_fen = board.fen()
-            board_input = model.fen_to_model_input(board_fen)
-            reward = model.predict(board_input)
+            model_input = model.fen_to_model_input(self.get_fen())
+            reward = model.predict(model_input)
         elif outcome.winner is None:
             reward = 0
         elif outcome.winner is chess.WHITE:
@@ -30,79 +52,38 @@ class AlphaBeta:
             reward = -1
         else:
             raise Exception("Error with outcome.")
+        return reward
+    
+    def get_fen(self):
+        return self.board.fen()
 
+
+class AlphaBeta:   
     def run(self, state, model, depth, max_depth, alpha, beta):
-        outcome = state.outcome()
+        outcome = state.get_outcome()
         if depth is max_depth or outcome is not None:
-            
-            variation = Variation(reward, board.fen())
+            reward = state.get_reward(outcome, model)
+            variation = Variation(reward, state.copy())
             return variation
-
-        if board.turn is chess.WHITE:
+        if state.is_max_turn():
             principal_variation = Variation(-100, None)
-            for move in board.legal_moves:
-                board.push(move)
-                variation = self.run(board, model, depth + 1, max_depth, alpha, beta)
+            for action in state.get_actions():
+                state.do_action(action)
+                variation = self.run(state, model, depth + 1, max_depth, alpha, beta)
                 principal_variation = max([principal_variation, variation], key=lambda x: x.reward)
-                board.pop()
+                state.undo_action()
                 if principal_variation.reward > beta:
                     break
                 alpha = max(alpha, principal_variation.reward)
         else:
             principal_variation = Variation(100, None)
-            for move in board.legal_moves:
-                board.push(move)
-                variation = self.run(board, model, depth + 1, max_depth, alpha, beta)
+            for action in state.get_actions():
+                state.do_action(action)
+                variation = self.run(state, model, depth + 1, max_depth, alpha, beta)
                 principal_variation = min([principal_variation, variation], key=lambda x: x.reward)
-                board.pop()
+                state.undo_action()
                 if principal_variation.reward < alpha:
                     break
                 beta = min(beta, principal_variation.reward)
-        principal_variation.add_state(board.fen())
-        return principal_variation
-
-
-class ChessAlphaBeta(Search):
-    def __init__(self):
-        super().__init__()
-
-    def run(self, board, model, depth, max_depth, alpha, beta):
-        outcome = board.outcome()
-        if depth is max_depth or outcome is not None:
-            if outcome is None:
-                board_fen = board.fen()
-                board_input = model.fen_to_model_input(board_fen)
-                reward = model.predict(board_input)
-            elif outcome.winner is None:
-                reward = 0
-            elif outcome.winner is chess.WHITE:
-                reward = 1
-            elif outcome.winner is chess.BLACK:
-                reward = -1
-            else:
-                raise Exception("Error with outcome.")
-            variation = Variation(reward, board.fen())
-            return variation
-
-        if board.turn is chess.WHITE:
-            principal_variation = Variation(-100, None)
-            for move in board.legal_moves:
-                board.push(move)
-                variation = self.run(board, model, depth + 1, max_depth, alpha, beta)
-                principal_variation = max([principal_variation, variation], key=lambda x: x.reward)
-                board.pop()
-                if principal_variation.reward > beta:
-                    break
-                alpha = max(alpha, principal_variation.reward)
-        else:
-            principal_variation = Variation(100, None)
-            for move in board.legal_moves:
-                board.push(move)
-                variation = self.run(board, model, depth + 1, max_depth, alpha, beta)
-                principal_variation = min([principal_variation, variation], key=lambda x: x.reward)
-                board.pop()
-                if principal_variation.reward < alpha:
-                    break
-                beta = min(beta, principal_variation.reward)
-        principal_variation.add_state(board.fen())
+        principal_variation.add_state(state.copy())
         return principal_variation

@@ -3,7 +3,7 @@ import chess
 import time
 
 from learning import ChessMLP
-from search import ChessAlphaBeta
+from search import AlphaBeta, ChessState
 
 start_state = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
 white_mate_in_1_1 = "8/8/8/k1K5/8/1R6/8/8 w - - 0 1"
@@ -14,24 +14,23 @@ white_mate_in_3_rook = "8/k7/8/2K5/8/1R6/8/8 w - - 0 1"
 white_mate_in_3_queen = "8/k7/8/2K5/8/1Q6/8/8 w - - 0 1"
 black_mate_in_2 = "K7/8/2k5/8/8/1r6/8/8 b - - 0 1"
 
-
-class ChessExperiment:
+class Experiment:
     def __init__(self, max_depth, train_steps, lambda_value):
         self.max_depth = max_depth
         self.train_steps = train_steps
         self.lambda_value = lambda_value
 
-    def run(self, start_states, model):
+    def print_state(self, state):
+        pass
+
+    def run(self, model, start_states):
         for start_state in start_states:
             # Search
-            print(f"Start Position: {start_state}")
-            board = chess.Board(start_state)
-            # print("Board:\n" + str(board))
-
+            print(f"Start state:\n{start_state.get_string()}")
             start_time = time.time()
-            chess_alpha_beta = ChessAlphaBeta()
-            principal_variation = chess_alpha_beta.run(
-                board=board,
+            alpha_beta = AlphaBeta()
+            principal_variation = alpha_beta.run(
+                state=start_state,
                 model=model,
                 depth=0,
                 max_depth=self.max_depth,
@@ -41,14 +40,19 @@ class ChessExperiment:
             end_time = time.time() - start_time
             print("Alphabeta - Time: %.4s" % end_time)
             print("Principal Variation - Evaluation: %s" % principal_variation.reward)
+            for state_idx, state in enumerate(principal_variation.states):
+                print(f"State {state_idx}:\n{state.get_string()}")
 
             # Learning
             model.train(principal_variation,
                         steps=self.train_steps,
                         lambda_value=self.lambda_value)
 
-    @staticmethod
-    def create_random_chess_board(non_king_pieces, turn):
+class ChessExperiment(Experiment):
+    def __init__(self, max_depth, train_steps, lambda_value):
+        super().__init__(max_depth, train_steps, lambda_value)
+
+    def create_random_chess_board(self, non_king_pieces, turn):
         kings = [chess.Piece(chess.KING, chess.WHITE),
                  chess.Piece(chess.KING, chess.BLACK)]
         pieces = kings + non_king_pieces
@@ -66,7 +70,7 @@ class ChessExperiment:
             board.turn = turn
             if board.is_valid():
                 break
-        return board.fen()
+        return board
 
 
 class RookEndgamesExperiment(ChessExperiment):
@@ -75,10 +79,11 @@ class RookEndgamesExperiment(ChessExperiment):
         self.iterations = iterations
 
     def run(self, model):
-        start_states = []
+        start_states = [ChessState(chess.Board(white_mate_in_2_2)), ChessState(chess.Board(black_mate_in_2))]
+        # start_states = []
         for i in range(self.iterations):
-            start_states.append(self.create_random_king_rook_endgame())
-        super().run(start_states, model)
+            start_states.append(ChessState(self.create_random_king_rook_endgame()))
+        super().run(model, start_states)
 
     def create_random_king_rook_endgame(self):
         rooks = [chess.Piece(chess.ROOK, chess.WHITE),
