@@ -1,1 +1,1 @@
-# td-learning-chess-endgames
+# chess-endgames
