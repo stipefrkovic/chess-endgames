@@ -2,7 +2,13 @@ Model Summary:
 None
 rook_endgames 0
 rook_endgames 1
-queen_endgames 0
-queen_endgames 1
+rook_endgames 2
+rook_endgames 3
+rook_endgames 4
+rook_endgames 5
+rook_endgames 6
+rook_endgames 7
+rook_endgames 8
+rook_endgames 9
 Attempting to save weights
 Saved weights

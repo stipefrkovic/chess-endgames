@@ -3,9 +3,10 @@ import chess
 import time
 from matplotlib import pyplot as plt
 from pathlib import Path
+import numpy as np
 
 from search import AlphaBeta, ChessState
-from my_logger import logger
+from logger import logger
 
 start_state = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
 white_mate_in_1_1 = "8/8/8/k1K5/8/1R6/8/8 w - - 0 1"
@@ -18,7 +19,8 @@ black_mate_in_2 = "K7/8/2k5/8/8/1r6/8/8 b - - 0 1"
 
 
 class Experiment:
-    def __init__(self, max_depth, train_steps, lambda_value):
+    def __init__(self, name, max_depth, train_steps, lambda_value):
+        self.name = name
         self.max_depth = max_depth
         self.train_steps = train_steps
         self.lambda_value = lambda_value
@@ -26,7 +28,7 @@ class Experiment:
     def run(self, model, start_state, train):
         # Search
         # logger.debug(f"Start state:\n{start_state.get_string()}")
-        start_time = time.time()
+        # start_time = time.time()
         alpha_beta = AlphaBeta()
         principal_variation = alpha_beta.run(
             state=start_state,
@@ -36,7 +38,7 @@ class Experiment:
             alpha=-100,
             beta=100
         )
-        end_time = time.time() - start_time
+        # end_time = time.time() - start_time
         # logger.debug(f"AlphaBeta Time: {end_time:.4f}")
         # logger.info(f"PV Reward: {principal_variation.reward}")
         # for state_idx, state in enumerate(principal_variation.states):
@@ -51,13 +53,12 @@ class Experiment:
         return principal_variation.reward
 
 class ChessExperiment(Experiment):
-    def __init__(self, max_depth, train_steps, lambda_value):
-        super().__init__(max_depth, train_steps, lambda_value)
-
     def run(self, model, start_state, train):
-        real_eval = 1 if start_state.is_max_turn() else -1
+        real_reward = 1 if start_state.is_max_turn() else -1
+        logger.info(f"Real Reward: {real_reward}")
         pv_reward = super().run(model, start_state, train)
-        abs_loss = abs(real_eval - pv_reward)
+        logger.info(f"PV Reward: {pv_reward}")
+        abs_loss = abs(real_reward - pv_reward)
         return abs_loss
 
     def create_random_chess_board(self, non_king_pieces, turn):
@@ -82,13 +83,14 @@ class ChessExperiment(Experiment):
 
 
 class RookEndgameExperiment(ChessExperiment):
-    def __init__(self, max_depth, train_steps, lambda_value):
-        super().__init__(max_depth, train_steps, lambda_value)
+    def __init__(self, name, max_depth, train_steps, lambda_value):
+        super().__init__(name, max_depth, train_steps, lambda_value)
 
     def run(self, model, train=True):
-        rook_endgame_board = self.create_random_rook_endgame()
-        start_state = ChessState(rook_endgame_board)
-        return super().run(model, start_state, train)
+        # board = TODO
+        # start_state = ChessState(board)
+        # return super().run(model, start_state, train)
+        pass
 
     def create_random_rook_endgame(self):
         rooks = [chess.Piece(chess.ROOK, chess.WHITE),
@@ -96,10 +98,13 @@ class RookEndgameExperiment(ChessExperiment):
         random_rook = random.choice(rooks)
         return super().create_random_chess_board([random_rook], random_rook.color)
     
+    def create_random_rook_checkmate(self):
+        # TODO
+        pass   
 
 class QueenEndgameExperiment(ChessExperiment):
-    def __init__(self, max_depth, train_steps, lambda_value):
-        super().__init__(max_depth, train_steps, lambda_value)
+    def __init__(self, name, max_depth, train_steps, lambda_value):
+        super().__init__(name, max_depth, train_steps, lambda_value)
 
     def run(self, model, train=True):
         queen_endgame_board = self.create_random_queen_endgame()
@@ -127,13 +132,13 @@ class ExperimentRunner:
         if save_weights:
             self.model.save_weights()
 
-    def run_experiments(self, experiment_name, experiment, iterations):
+    def run_experiments(self, experiment, iterations):
         losses = []
         for i in range(iterations):
-            logger.info(f"{experiment_name} {i}")
+            logger.info(f"{experiment.name} {i}")
             losses.append(experiment.run(self.model))
         # logger.info(f"Losses: {losses}")
-        self.plot_losses(experiment_name, losses)
+        self.plot_losses(experiment.name, losses)
 
     def plot_losses(self, name, losses, ylim=(-0.05, 1.05)):
         fig, ax = plt.subplots()

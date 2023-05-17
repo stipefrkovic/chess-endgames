@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 
-from my_logger import logger
+from logger import logger
 
 def compute_tds(reward, evaluations):
     evaluations = evaluations
@@ -75,7 +75,7 @@ class MLP(Model):
     def train(self, variation, steps, lambda_value):
         inputs = self.variation_to_inputs(variation)
         evaluations = self.evaluate_inputs(inputs)
-        # logger.info(f"Model Old Evals: {evaluations}")
+        logger.info(f"Model Old Evals: {evaluations}")
         reward = variation.get_reward()
         for step in range(steps):
             input_states = inputs.copy()
@@ -92,8 +92,8 @@ class MLP(Model):
                     predicted_value *= -lambda_td
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
-        # updated_evaluations = self.evaluate_inputs(inputs)
-        # logger.info(f"Model New Evals: {updated_evaluations}")
+        updated_evaluations = self.evaluate_inputs(inputs)
+        logger.info(f"Model New Evals: {updated_evaluations}")
 
 
 class ChessMLP(MLP):
