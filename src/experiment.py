@@ -4,6 +4,11 @@ from pathlib import Path
 import csv
 import time
 import os
+from matplotlib import pyplot as plt
+from matplotlib.transforms import Affine2D
+from itertools import chain
+import numpy as np
+import pandas as pd
 
 from search import alpha_beta, ChessState
 from logger import logger
@@ -118,17 +123,18 @@ class ChessBoard():
 
 
 class Game:
-    def __init__(self, name, max_depth, train_steps, lambda_value, results_path='/src/results/'):
+    def __init__(self, name, max_depth, train_steps, lambda_value, figures_path='/src/figures/', results_path='/src/results/'):
         self.name = name
         self.max_depth = max_depth
         self.train_steps = train_steps
         self.lambda_value = lambda_value
+        self.figures_path = str(Path().absolute()) + figures_path
         self.results_path = str(Path().absolute()) + results_path
 
     def play(self, model, start_state, train):
         # Search
         logger.info("Searching")
-        self.write_results("real_reward", [start_state.real_reward])
+        # self.write_results("real_reward", [start_state.real_reward])
 
         pv = alpha_beta(
             state=start_state,
@@ -138,10 +144,10 @@ class Game:
             alpha=-100,
             beta=100
         )
-        self.write_results("pv_reward", [pv.reward])
+        # self.write_results("pv_reward", [pv.reward])
 
         reward_loss = abs(start_state.real_reward - pv.reward)
-        self.write_results("reward_loss", [reward_loss])
+        self.write_results("reward_losses", [reward_loss])
 
         # Learning
         logger.info("Training")
@@ -162,6 +168,61 @@ class Game:
         writer = csv.writer(results_file)
         writer.writerow(results)
         results_file.close()
+
+    def plot_reward_losses(self):
+        file = open(f"{self.results_path}{self.name}_reward_losses.csv", 'r')
+        reader = csv.reader(file)
+        reward_losses_2d = list(reader)
+        file.close()
+        logger.info(reward_losses_2d)
+        reward_losses_1d = list(chain(*reward_losses_2d))
+        logger.info(reward_losses_1d)
+
+        fig, ax = plt.subplots()
+        ax.plot(range(len(reward_losses_1d)), reward_losses_1d)
+        plt.xticks(range(len(reward_losses_1d)))
+        plt.xlabel('Time')
+        plt.ylabel('Reward Loss')
+        plt.ylim(min(reward_losses_1d), max(reward_losses_1d))
+        # plt.show()
+        fig.savefig(f"{self.figures_path}{self.name}_reward_loss.png")
+
+    def plot_evaluation_losses(self):
+        df1 = pd.read_table(f"{self.results_path}{self.name}_old_evaluation_losses.csv", sep=",", header=None)
+        df2 = pd.read_table(f"{self.results_path}{self.name}_new_evaluation_losses.csv", sep=",", header=None)
+        
+        old_eval_loss = np.array(df1)
+        old_eval_loss_avg = np.average(old_eval_loss, axis=0)
+        old_eval_loss_std = np.std(old_eval_loss, axis=0)
+
+        new_eval_loss = np.array(df2)
+        new_eval_loss_avg = np.average(new_eval_loss, axis=0)
+        new_eval_loss_std = np.std(new_eval_loss, axis=0)
+
+        fig, ax = plt.subplots()
+        trans1 = Affine2D().translate(-0.1, 0.0) + ax.transData
+        trans2 = Affine2D().translate(+0.1, 0.0) + ax.transData
+        plt.xlabel('State')
+        plt.ylabel('Evaluation Loss')
+        plt.xticks(range(len(old_eval_loss_avg)+1))    
+        ax.errorbar(range(1, len(old_eval_loss_avg)+1, +1),
+                    old_eval_loss_avg,
+                    old_eval_loss_std,
+                    transform=trans1,
+                    marker='o',
+                    linestyle='none',
+                    label='Before training')
+        ax.errorbar(range(1, len(new_eval_loss_avg)+1, +1),
+                    new_eval_loss_avg,
+                    new_eval_loss_std,
+                    transform=trans2,
+                    marker='o',
+                    linestyle='none',
+                    label='After training')
+        ax.legend()
+        # plt.show()
+        fig.savefig(f"{self.figures_path}{self.name}_evaluation_loss.png")
+
 
 class ChessGame(Game):
     # def create_random_chess_board(self, non_king_pieces, turn):
@@ -256,19 +317,22 @@ class GamePlayer:
         self.figures_path = str(Path().absolute()) + figures_path
         self.results_path = str(Path().absolute()) + results_path
 
-    def set_up(self, load_weights=True, clear_results=True):
+    def set_up(self, load_weights=True, clear_dirs=True):
         self.model.build()
         if load_weights:
             self.model.load_weights()
-        if clear_results:
-            self.clear_results()
+        if clear_dirs:
+            self.clear_dirs()
 
-    def clear_results(self):
-        for f in os.listdir(self.results_path):
-            if not f.endswith(".csv"):
+    def clear_dirs(self):
+        self.clear_dir(self.results_path, ".csv")
+        self.clear_dir(self.figures_path, ".png")
+
+    def clear_dir(self, path, ending):
+        for f in os.listdir(path):
+            if not f.endswith(ending):
                 continue
-            os.remove(os.path.join(self.results_path, f))
-
+            os.remove(os.path.join(path, f))
 
     def wrap_up(self, save_weights=True):
         if save_weights:
@@ -279,9 +343,11 @@ class GamePlayer:
             logger.info(f"{game.name} {i}")
             start_time = time.time()
             game.play(self.model)
-            end_time = time.time() - start_time 
+            end_time = time.time() - start_time
             logger.info(f"time: {end_time:.4f}")
-        # self.plot_losses(game.name, abs_losses)
+        
+        game.plot_reward_losses()
+        game.plot_evaluation_losses()
 
     # def plot_losses(self, name, losses, ylim=(-0.05, 1.05)):
     #     fig, ax = plt.subplots()

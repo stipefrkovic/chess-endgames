@@ -3,3 +3,4 @@
 /src/__pycache__
 *.csv
 *.log
+*.png
