@@ -19,14 +19,15 @@ class Variation:
 class ChessState():
     def __init__(self, board):
         self.board = board
+        self.real_reward = 1 if self.max_turn() else -1
 
-    def get_string(self):
+    def string(self):
         return self.board.fen()
 
     def copy(self):
         return ChessState(self.board.copy())
     
-    def is_max_turn(self):
+    def max_turn(self):
         return self.board.turn is chess.WHITE
     
     def get_actions(self):
@@ -43,7 +44,7 @@ class ChessState():
 
     def get_reward(self, outcome, model):
         if outcome is None:
-            model_input = model.fen_to_model_input(self.get_string())
+            model_input = model.fen_to_model_input(self.string())
             reward = model.predict(model_input)
         elif outcome.winner is None:
             reward = 0
@@ -56,32 +57,31 @@ class ChessState():
         return reward
 
 
-class AlphaBeta:
-    def run(self, state, model, depth, max_depth, alpha, beta):
-        outcome = state.get_outcome()
-        if depth is max_depth or outcome is not None:
-            reward = state.get_reward(outcome, model)
-            variation = Variation(reward, state.copy())
-            return variation
-        if state.is_max_turn():
-            principal_variation = Variation(-100, None)
-            for action in state.get_actions():
-                state.do_action(action)
-                variation = self.run(state, model, depth + 1, max_depth, alpha, beta)
-                principal_variation = max([principal_variation, variation], key=lambda x: x.reward)
-                state.undo_action()
-                if principal_variation.reward > beta:
-                    break
-                alpha = max(alpha, principal_variation.reward)
-        else:
-            principal_variation = Variation(100, None)
-            for action in state.get_actions():
-                state.do_action(action)
-                variation = self.run(state, model, depth + 1, max_depth, alpha, beta)
-                principal_variation = min([principal_variation, variation], key=lambda x: x.reward)
-                state.undo_action()
-                if principal_variation.reward < alpha:
-                    break
-                beta = min(beta, principal_variation.reward)
-        principal_variation.add_state(state.copy())
-        return principal_variation
+def alpha_beta(state, model, depth, max_depth, alpha, beta):
+    outcome = state.get_outcome()
+    if depth is max_depth or outcome is not None:
+        reward = state.get_reward(outcome, model)
+        variation = Variation(reward, state.copy())
+        return variation
+    if state.max_turn():
+        principal_variation = Variation(-100, None)
+        for action in state.get_actions():
+            state.do_action(action)
+            variation = alpha_beta(state, model, depth + 1, max_depth, alpha, beta)
+            principal_variation = max([principal_variation, variation], key=lambda x: x.reward)
+            state.undo_action()
+            if principal_variation.reward > beta:
+                break
+            alpha = max(alpha, principal_variation.reward)
+    else:
+        principal_variation = Variation(100, None)
+        for action in state.get_actions():
+            state.do_action(action)
+            variation = alpha_beta(state, model, depth + 1, max_depth, alpha, beta)
+            principal_variation = min([principal_variation, variation], key=lambda x: x.reward)
+            state.undo_action()
+            if principal_variation.reward < alpha:
+                break
+            beta = min(beta, principal_variation.reward)
+    principal_variation.add_state(state.copy())
+    return principal_variation

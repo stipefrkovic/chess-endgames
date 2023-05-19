@@ -1,14 +1,56 @@
 Model Summary:
 None
 rook_endgames 0
+
+K . . . . . . .
+. . . . . . . .
+. . k . . . . .
+. . . . . . . .
+. . . . . . . .
+. r . . . . . .
+. . . . . . . .
+. . . . . . . .
+Searching
+Training
+time: 15.4914
 rook_endgames 1
-rook_endgames 2
-rook_endgames 3
-rook_endgames 4
-rook_endgames 5
-rook_endgames 6
-rook_endgames 7
-rook_endgames 8
-rook_endgames 9
+
+K . . . . . . .
+. . . . . . . .
+. . k . . . . .
+. . . . . . . .
+. . . . . . . .
+. r . . . . . .
+. . . . . . . .
+. . . . . . . .
+Searching
+Training
+time: 16.1984
+queen_endgames 0
+
+K . . . . . . .
+. . . . . . . .
+. . k . . . . .
+. . . . . . . .
+. . . . . . . .
+. r . . . . . .
+. . . . . . . .
+. . . . . . . .
+Searching
+Training
+time: 17.3906
+queen_endgames 1
+
+K . . . . . . .
+. . . . . . . .
+. . k . . . . .
+. . . . . . . .
+. . . . . . . .
+. r . . . . . .
+. . . . . . . .
+. . . . . . . .
+Searching
+Training
+time: 16.3131
 Attempting to save weights
 Saved weights

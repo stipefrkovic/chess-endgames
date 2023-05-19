@@ -47,7 +47,7 @@ class Model:
         self.model.save_weights(self.model_weights_path)
         logger.info("Saved weights")
 
-    def train(self, variation, steps, lambda_value):
+    def train(self, variation, steps, lambda_value, game):
         pass
 
     def variation_to_inputs(self, variation):
@@ -74,8 +74,9 @@ class MLP(Model):
 
     def train(self, variation, steps, lambda_value):
         inputs = self.variation_to_inputs(variation)
-        evaluations = self.evaluate_inputs(inputs)
-        logger.info(f"Model Old Evals: {evaluations}")
+        
+        old_evaluations = self.evaluate_inputs(inputs)
+        
         reward = variation.get_reward()
         for step in range(steps):
             input_states = inputs.copy()
@@ -92,8 +93,13 @@ class MLP(Model):
                     predicted_value *= -lambda_td
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
-        updated_evaluations = self.evaluate_inputs(inputs)
-        logger.info(f"Model New Evals: {updated_evaluations}")
+        
+        new_evaluations = self.evaluate_inputs(inputs)
+        
+        return {
+            "old_evaluations": old_evaluations,
+            "new_evaluations": new_evaluations
+        }
 
 
 class ChessMLP(MLP):
@@ -112,7 +118,7 @@ class ChessMLP(MLP):
         return self.chess_states_to_model_inputs(variation.get_states())
 
     def chess_states_to_model_inputs(self, chess_states):
-        inputs = [self.fen_to_model_input(chess_state.get_string()) for chess_state in chess_states]
+        inputs = [self.fen_to_model_input(chess_state.string()) for chess_state in chess_states]
         return inputs
 
     def fen_to_model_input(self, fen):
