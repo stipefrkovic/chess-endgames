@@ -1,3 +1,5 @@
 /venv/
 /.idea/
 /src/__pycache__
+*.csv
+/src/log_files/*.log

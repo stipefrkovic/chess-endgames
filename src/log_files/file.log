@@ -12,7 +12,7 @@ K . . . . . . .
 . . . . . . . .
 Searching
 Training
-time: 15.4914
+time: 17.0061
 rook_endgames 1
 
 K . . . . . . .
@@ -25,7 +25,7 @@ K . . . . . . .
 . . . . . . . .
 Searching
 Training
-time: 16.1984
+time: 16.1223
 queen_endgames 0
 
 K . . . . . . .
@@ -38,7 +38,7 @@ K . . . . . . .
 . . . . . . . .
 Searching
 Training
-time: 17.3906
+time: 16.1965
 queen_endgames 1
 
 K . . . . . . .
@@ -51,6 +51,6 @@ K . . . . . . .
 . . . . . . . .
 Searching
 Training
-time: 16.3131
+time: 17.0640
 Attempting to save weights
 Saved weights
