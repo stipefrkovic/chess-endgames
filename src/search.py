@@ -21,6 +21,9 @@ class ChessState():
         self.board = board
         self.real_reward = 1 if self.max_turn() else -1
 
+    def __str__(self):
+        return self.board.__str__()
+
     def string(self):
         return self.board.fen()
 

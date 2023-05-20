@@ -9,6 +9,7 @@ from matplotlib.transforms import Affine2D
 from itertools import chain
 import numpy as np
 import pandas as pd
+import math 
 
 from search import alpha_beta, ChessState
 from logger import logger
@@ -40,39 +41,40 @@ class ChessSquare():
     def create_square(self):
         return chess.square(self.file, self.rank)
     
-    def legal_neighbors(self):
-        neighbor_squares = []
+    def eight_neighbors(self, num_files, num_ranks):
+        neighbor_squares = self.four_neighbors(num_files, num_ranks)
         # Check bottom-left neighbor
         if self.rank > 0 and self.file > 0:
             neighbor_squares.append(ChessSquare(self.file-1, self.rank-1))
+        # Check bottom-right neighbor
+        if self.rank > 0 and self.file < num_files - 1:
+            neighbor_squares.append(ChessSquare(self.file+1, self.rank-1))
+        # Check top-left neighbor
+        if self.rank < num_ranks - 1 and self.file > 0:
+            neighbor_squares.append(ChessSquare(self.file-1, self.rank+1))
+        # Check top-right neighbor
+        if self.rank < num_ranks - 1 and self.file < num_files - 1:
+            neighbor_squares.append(ChessSquare(self.file+1, self.rank+1))
+        return neighbor_squares
+    
+    def four_neighbors(self, num_files, num_ranks):
+        neighbor_squares = []
         # Check bottom neighbor
         if self.rank > 0:
             neighbor_squares.append(ChessSquare(self.file, self.rank-1))
-        # Check bottom-right neighbor
-        if self.rank > 0 and self.file < ChessBoard.num_files - 1:
-            neighbor_squares.append(ChessSquare(self.file+1, self.rank-1))
         # Check left neighbor
         if self.file > 0:
             neighbor_squares.append(ChessSquare(self.file-1, self.rank))
         # Check right neighbor
-        if self.file < ChessBoard.num_files - 1:
+        if self.file < num_files - 1:
             neighbor_squares.append(ChessSquare(self.file+1, self.rank))
-        # Check top-left neighbor
-        if self.rank < ChessBoard.num_ranks - 1 and self.file > 0:
-            neighbor_squares.append(ChessSquare(self.file-1, self.rank+1))
         # Check top neighbor
-        if self.rank < ChessBoard.num_ranks - 1:
+        if self.rank < num_ranks - 1:
             neighbor_squares.append(ChessSquare(self.file, self.rank+1))
-        # Check top-right neighbor
-        if self.rank < ChessBoard.num_ranks - 1 and self.file < ChessBoard.num_files - 1:
-            neighbor_squares.append(ChessSquare(self.file+1, self.rank+1))
         return neighbor_squares
 
 
 class ChessBoard():
-    num_files = 8
-    num_ranks = 8
-
     def __init__(self, squares):
         self.squares = squares
 
@@ -90,25 +92,27 @@ class ChessBoard():
                     self.squares[square_idx] = None
                 board.remove_piece_at(square.create_square())
 
-    def flood_fill(self, square, region):
+    def flood_fill(self, square, region, num_files, num_ranks):
         if square is None or square not in self.squares:
             return
         else:
             region.append(square)
             square_idx = self.squares.index(square)
             self.squares[square_idx] = None
-            neighbors = square.legal_neighbors()
+            neighbors = square.four_neighbors(num_files, num_ranks)
             for neighbor in neighbors:
-                self.flood_fill(neighbor, region)
+                self.flood_fill(neighbor, region, num_files, num_ranks)
 
-    def find_smallest_region(self):
+    def find_smallest_region(self, num_files, num_ranks):
         regions = []
         for square in self.squares:
             if square is not None:
                 region = []
-                self.flood_fill(square, region)
+                self.flood_fill(square, region, num_files, num_ranks)
                 if region:
                     regions.append(region)
+                    # for i in range(8):
+                    #     print(self.squares[i*8:i*8+8])
         return min(regions, key=len)
 
 
@@ -123,9 +127,9 @@ class Game:
 
     def play(self, model, start_state, train):
         # Search
+        # TODO fix logging :
         logger.info("Searching")
-        logger.info(f"real_reward {start_state.real_reward}")
-
+        logger.info(f"start_state:\n{start_state}")
         pv = alpha_beta(
             state=start_state,
             model=model,
@@ -134,6 +138,8 @@ class Game:
             alpha=-100,
             beta=100
         )
+        logger.info(f"end_state:\n{pv.get_states()[-1]}")
+        logger.info(f"real_reward {start_state.real_reward}")
         logger.info(f"pv_reward {pv.reward}")
 
         reward_loss = abs(start_state.real_reward - pv.reward)
@@ -229,22 +235,23 @@ class ChessGame(Game):
     #     return board
     
     def create_region_chess_board(self, pieces, turn):
-        chess_squares = ChessBoard([ChessSquare(file, rank) for rank in range(ChessBoard.num_ranks-1, -1, -1) for file in range(0, ChessBoard.num_files, 1)])
         board = chess.Board().empty()
         board.turn = turn
 
         # King
-        king_square = chess_squares.random_square()
+        king_squares = ChessBoard([ChessSquare(file, rank) for rank in range(7, -1, -1) for file in range(0, 8, 1)])
+        king_square = king_squares.random_square()
         board.set_piece_at(king_square.create_square(), pieces[0])
 
         # King's piece
-        neighbor_squares = ChessBoard(king_square.legal_neighbors())
+        neighbor_squares = ChessBoard(king_square.eight_neighbors(8, 8))
         piece_square = neighbor_squares.random_square()
         board.set_piece_at(piece_square.create_square(), pieces[1])
 
         # Other King
+        chess_squares = ChessBoard([ChessSquare(file, rank) for rank in range(7, -1, -1) for file in range(0, 8, 1)])
         chess_squares.remove_illegal_squares(board, pieces[2])
-        other_king_squares = ChessBoard(chess_squares.find_smallest_region())
+        other_king_squares = ChessBoard(chess_squares.find_smallest_region(8, 8))
         other_king_square = other_king_squares.random_square()
         board.set_piece_at(other_king_square.create_square(), pieces[2])
         
@@ -259,7 +266,6 @@ class ChessGame(Game):
         other_king = chess.Piece(chess.KING, not winning_color)
         pieces = (first_king, first_king_piece, other_king)
         board = self.create_region_chess_board(pieces, winning_color)
-        logger.info(f"Board:\n{board}")
         return ChessState(board)
 
 
@@ -321,11 +327,15 @@ class GamePlayer:
             self.model.save_weights()
 
     def play_game(self, game, iterations):
-        for i in range(iterations):
-            logger.info(f"{game.name} {i}")
+        logger.info(f"game.name: {game.name}")
+        logger.info(f"game.max_depth: {game.max_depth}")
+        logger.info(f"game.train_steps: {game.train_steps}")
+        logger.info(f"game.lambda_value: {game.lambda_value}")
+        for i in range(1, iterations+1):
+            logger.info(f"{game.name} {i} of {iterations}")
             start_time = time.time()
             game.play(self.model)
             end_time = time.time() - start_time
-            logger.info(f"time: {end_time:.4f}")
+            logger.info(f"time: {end_time:.4f} sec")
         game.plot_reward_losses()
         game.plot_evaluation_losses()

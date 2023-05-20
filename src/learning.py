@@ -70,7 +70,7 @@ class MLP(Model):
     def __init__(self, model_weights_path):
         super().__init__(model_weights_path)
         
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0005)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0002)
 
     def train(self, variation, steps, lambda_value):
         inputs = self.variation_to_inputs(variation)

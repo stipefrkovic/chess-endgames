@@ -11,24 +11,24 @@ def main():
         clear_dirs=True
         )
     
-    queen_endgame_game = QueenEndgameGame(
-        max_depth=3,
-        train_steps=10,
-        lambda_value=0.9
-        )
-    game_player.play_game(
-        game=queen_endgame_game,
-        iterations=10
-        )
+    # queen_endgame_game = QueenEndgameGame(
+    #     max_depth=5,
+    #     train_steps=15,
+    #     lambda_value=0.9
+    #     )
+    # game_player.play_game(
+    #     game=queen_endgame_game,
+    #     iterations=10
+    #     )
 
     rook_endgame_game = RookEndgameGame(
-        max_depth=3,
-        train_steps=10,
+        max_depth=5,
+        train_steps=15,
         lambda_value=0.9
         )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=10
+        iterations=25
         )
     
     game_player.wrap_up(
