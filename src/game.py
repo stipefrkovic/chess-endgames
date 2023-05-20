@@ -346,7 +346,7 @@ class GamePlayer:
             game.play(self.model)
             end_time = time.time() - start_time
             logger.info(f"time: {end_time:.4f} sec")
-            if i % save_every_n_iter:
+            if i % save_every_n_iter == 0:
                 self.model.save_weights()
         game.plot_reward_losses()
         game.plot_evaluation_losses()
