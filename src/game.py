@@ -117,15 +117,16 @@ class ChessBoard():
 
 
 class Game:
-    def __init__(self, max_depth, train_steps, lambda_value, name, figures_path='/src/figures/', results_path='/src/results/'):
+    def __init__(self, max_depth, train, train_steps, lambda_value, name, figures_path='/src/figures/', results_path='/src/results/'):
         self.max_depth = max_depth
+        self.train = train
         self.train_steps = train_steps
         self.lambda_value = lambda_value
         self.name = name
         self.figures_path = str(Path().absolute()) + figures_path
         self.results_path = str(Path().absolute()) + results_path
 
-    def play(self, model, start_state, train):
+    def play(self, model, start_state):
         # Search
         logger.info("Searching")
         logger.info(f"start_state:\n{start_state}")
@@ -146,7 +147,7 @@ class Game:
 
         # Learning
         logger.info("Training")
-        if train:
+        if self.train:
             evaluations = model.train(pv,
                                       steps=self.train_steps,
                                       lambda_value=self.lambda_value)
@@ -278,12 +279,12 @@ class ChessGame(Game):
 
 
 class RookEndgameGame(ChessGame):
-    def __init__(self, max_depth, train_steps, lambda_value):
-        super().__init__(max_depth, train_steps, lambda_value, name="rook_endgame")
+    def __init__(self, max_depth, train, train_steps, lambda_value, name):
+        super().__init__(max_depth, train, train_steps, lambda_value, name)
 
-    def play(self, model, train=True):
+    def play(self, model):
         start_state = self.create_region_chess_state(chess.ROOK)
-        return super().play(model, start_state, train)
+        return super().play(model, start_state)
 
     # def create_random_rook_endgame(self):
     #     rooks = [chess.Piece(chess.ROOK, chess.WHITE),
@@ -293,12 +294,12 @@ class RookEndgameGame(ChessGame):
 
 
 class QueenEndgameGame(ChessGame):
-    def __init__(self, max_depth, train_steps, lambda_value):
-        super().__init__(max_depth, train_steps, lambda_value, name="queen_endgame")
+    def __init__(self, max_depth, train, train_steps, lambda_value, name):
+        super().__init__(max_depth, train, train_steps, lambda_value, name)
 
-    def play(self, model, train=True):
+    def play(self, model):
         start_state = self.create_region_chess_state(chess.QUEEN)
-        return super().play(model, start_state, train)
+        return super().play(model, start_state)
     
     # def create_random_queen_endgame(self):
     #     queens = [chess.Piece(chess.QUEEN, chess.WHITE),
@@ -334,7 +335,7 @@ class GamePlayer:
         if save_weights:
             self.model.save_weights()
 
-    def play_game(self, game, iterations):
+    def play_game(self, game, iterations, save_every_n_iter):
         logger.info(f"game.name: {game.name}")
         logger.info(f"game.max_depth: {game.max_depth}")
         logger.info(f"game.train_steps: {game.train_steps}")
@@ -345,5 +346,7 @@ class GamePlayer:
             game.play(self.model)
             end_time = time.time() - start_time
             logger.info(f"time: {end_time:.4f} sec")
+            if i % save_every_n_iter:
+                self.model.save_weights()
         game.plot_reward_losses()
         game.plot_evaluation_losses()
