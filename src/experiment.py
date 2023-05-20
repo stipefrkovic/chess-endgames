@@ -127,7 +127,6 @@ class Game:
 
     def play(self, model, start_state, train):
         # Search
-        # TODO fix logging :
         logger.info("Searching")
         logger.info(f"start_state:\n{start_state}")
         pv = alpha_beta(
