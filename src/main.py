@@ -1,7 +1,6 @@
 from experiment import GamePlayer, RookEndgameGame, QueenEndgameGame
 from learning import ChessMLP
 
-# TODO log settings
 
 def main():
     chess_mlp = ChessMLP()

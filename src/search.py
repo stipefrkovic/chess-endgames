@@ -14,7 +14,6 @@ class Variation:
     def get_reward(self):
         return self.reward
 
-# TODO create class State
 
 class ChessState():
     def __init__(self, board):
