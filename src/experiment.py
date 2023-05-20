@@ -139,8 +139,8 @@ class Game:
             beta=100
         )
         logger.info(f"end_state:\n{pv.get_states()[-1]}")
-        logger.info(f"real_reward {start_state.real_reward}")
-        logger.info(f"pv_reward {pv.reward}")
+        logger.info(f"real_reward: {start_state.real_reward}")
+        logger.info(f"pv_reward: {pv.reward}")
 
         reward_loss = abs(start_state.real_reward - pv.reward)
         self.write_results("reward_loss", [reward_loss])

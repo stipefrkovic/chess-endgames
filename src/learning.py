@@ -76,7 +76,7 @@ class MLP(Model):
         inputs = self.variation_to_inputs(variation)
         
         old_eval = self.evaluate_inputs(inputs)
-        logger.info(f"old_eval {old_eval}")
+        logger.info(f"old_eval: {old_eval}")
         
         reward = variation.get_reward()
         for step in range(steps):
@@ -96,7 +96,7 @@ class MLP(Model):
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
         
         new_eval = self.evaluate_inputs(inputs)
-        logger.info(f"new_eval {new_eval}")
+        logger.info(f"new_eval: {new_eval}")
         
         return {
             "old_eval": old_eval,
