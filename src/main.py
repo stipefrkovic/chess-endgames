@@ -1,5 +1,5 @@
 from game import GamePlayer, RookEndgameGame, QueenEndgameGame
-from learning import ChessMLP
+from learn import ChessMLP
 import argparse
 
 def queen_endgame_raw_train():
