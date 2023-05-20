@@ -40,7 +40,7 @@ class Model:
             self.model.load_weights(self.model_weights_path)
             logger.info("Loaded model")
         else:
-            logger.info("Model not found")
+            logger.warning("Model not found")
 
     def save_weights(self):
         logger.info("Attempting to save weights")
@@ -75,7 +75,8 @@ class MLP(Model):
     def train(self, variation, steps, lambda_value):
         inputs = self.variation_to_inputs(variation)
         
-        old_evaluations = self.evaluate_inputs(inputs)
+        old_eval = self.evaluate_inputs(inputs)
+        logger.info(f"old_eval {old_eval}")
         
         reward = variation.get_reward()
         for step in range(steps):
@@ -94,11 +95,12 @@ class MLP(Model):
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
         
-        new_evaluations = self.evaluate_inputs(inputs)
+        new_eval = self.evaluate_inputs(inputs)
+        logger.info(f"new_eval {new_eval}")
         
         return {
-            "old_evaluations": old_evaluations,
-            "new_evaluations": new_evaluations
+            "old_eval": old_eval,
+            "new_eval": new_eval
         }
 
 
