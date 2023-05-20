@@ -169,12 +169,15 @@ class Game:
         reward_loss_2d = np.array(df)
         reward_losses_1d = list(chain(*reward_loss_2d))
 
+        logger.info(f"reward_loss_mean: {np.mean(reward_losses_1d)}")
+
+        logger.info("Plotting reward losses")
         fig, ax = plt.subplots()
-        ax.plot(range(len(reward_losses_1d)), reward_losses_1d)
-        plt.xticks(range(len(reward_losses_1d)))
+        ax.plot(range(1, len(reward_losses_1d)+1, 1), reward_losses_1d)
+        plt.xticks(range(1, len(reward_losses_1d)+1, 1))
         plt.xlabel('Game')
         plt.ylabel('Reward Loss')
-        plt.ylim(min(reward_losses_1d), max(reward_losses_1d))
+        plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
         fig.savefig(f"{self.figures_path}{self.name}_reward_loss.png")
 
     def plot_evaluation_losses(self):
@@ -182,27 +185,33 @@ class Game:
         df2 = pd.read_table(f"{self.results_path}{self.name}_new_eval_loss.csv", sep=",", names=list(range(self.max_depth+1)))
         
         old_eval_loss = np.array(df1)
-        old_eval_loss_avg = np.nanmean(old_eval_loss, axis=0)
+        old_eval_loss_mean = np.nanmean(old_eval_loss, axis=0)
         old_eval_loss_std = np.nanstd(old_eval_loss, axis=0)
         new_eval_loss = np.array(df2)
-        new_eval_loss_avg = np.nanmean(new_eval_loss, axis=0)
+        new_eval_loss_mean = np.nanmean(new_eval_loss, axis=0)
         new_eval_loss_std = np.nanstd(new_eval_loss, axis=0)
+        
+        logger.info(f"old_eval_loss_mean: {old_eval_loss_mean}")
+        logger.info(f"old_eval_loss_std: {old_eval_loss_std}")
+        logger.info(f"new_eval_loss_mean: {new_eval_loss_mean}")
+        logger.info(f"new_eval_loss_std: {new_eval_loss_std}")
 
+        logger.info("Plotting evaluation losses")
         fig, ax = plt.subplots()
         trans1 = Affine2D().translate(-0.1, 0.0) + ax.transData
         trans2 = Affine2D().translate(+0.1, 0.0) + ax.transData
         plt.xlabel('State')
         plt.ylabel('Evaluation Loss')
-        plt.xticks(range(len(old_eval_loss_avg)+1))    
-        ax.errorbar(range(1, len(old_eval_loss_avg)+1, +1),
-                    old_eval_loss_avg,
+        plt.xticks(range(len(old_eval_loss_mean)))   
+        ax.errorbar(range(len(old_eval_loss_mean)),
+                    old_eval_loss_mean,
                     old_eval_loss_std,
                     transform=trans1,
                     marker='o',
                     linestyle='none',
                     label='Before training')
-        ax.errorbar(range(1, len(new_eval_loss_avg)+1, +1),
-                    new_eval_loss_avg,
+        ax.errorbar(range(len(new_eval_loss_mean)),
+                    new_eval_loss_mean,
                     new_eval_loss_std,
                     transform=trans2,
                     marker='o',
@@ -330,7 +339,7 @@ class GamePlayer:
         logger.info(f"game.max_depth: {game.max_depth}")
         logger.info(f"game.train_steps: {game.train_steps}")
         logger.info(f"game.lambda_value: {game.lambda_value}")
-        for i in range(1, iterations+1):
+        for i in range(1, iterations+1, 1):
             logger.info(f"{game.name} {i} of {iterations}")
             start_time = time.time()
             game.play(self.model)
