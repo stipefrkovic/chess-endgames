@@ -9,7 +9,6 @@ from matplotlib.transforms import Affine2D
 from itertools import chain
 import numpy as np
 import pandas as pd
-import math 
 
 from search import alpha_beta, ChessState
 from logger import logger
