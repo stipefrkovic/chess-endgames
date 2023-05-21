@@ -5,25 +5,23 @@ from pathlib import Path
 
 from logger import logger
 
-def compute_tds(reward, evaluations):
-    evaluations = evaluations
-    evaluations.append(reward)
-    tds = [evaluations[i+1] - evaluations[i] for i in range(len(evaluations)-1)]
+def compute_tds(reward, predictions):
+    predictions = predictions.copy()
+    predictions.append(reward)
+    tds = [predictions[i+1] - predictions[i] for i in range(len(predictions)-1)]
     return tds
-
-
-def compute_lambda_tds(tds, lambda_value):
-    lambda_tds = []
-    for state_idx in range(len(tds)):
-        lambda_tds.append(compute_lambda_td(tds[state_idx:], lambda_value))
-    return lambda_tds
-
 
 def compute_lambda_td(tds, lambda_value):
     lambda_td = 0.0
     for td_idx, td in enumerate(tds):
         lambda_td += pow(lambda_value, td_idx) * td
     return lambda_td
+
+def compute_lambda_tds(tds, lambda_value):
+    lambda_tds = []
+    for state_idx in range(len(tds)):
+        lambda_tds.append(compute_lambda_td(tds[state_idx:], lambda_value))
+    return lambda_tds
 
 
 class Model:
@@ -53,12 +51,12 @@ class Model:
     def variation_to_inputs(self, variation):
         pass
 
-    def evaluate_inputs(self, inputs):
-        evaluations = []
+    def predict_inputs(self, inputs):
+        predictions = []
         for inp in inputs:
-            evaluation = self.predict(inp)
-            evaluations.append(evaluation)
-        return evaluations
+            prediction = self.predict(inp)
+            predictions.append(prediction)
+        return predictions
 
     def predict(self, x):
         prediction = self.model(x)
@@ -73,18 +71,21 @@ class MLP(Model):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0002)
 
     def train(self, variation, steps, lambda_value):
+        reward = variation.get_reward()
         inputs = self.variation_to_inputs(variation)
         
-        old_eval = self.evaluate_inputs(inputs)
-        logger.info(f"old_eval: {old_eval}")
+        old_predictions = self.predict_inputs(inputs)
+        logger.info(f"old_predictions: {old_predictions}")
         
-        reward = variation.get_reward()
+        old_tds = compute_tds(reward, old_predictions)
+        old_lambda_tds = compute_lambda_tds(old_tds, lambda_value)
+        
         for step in range(steps):
             input_states = inputs.copy()
             while len(input_states) > 0:
-                evaluations = self.evaluate_inputs(input_states)
-                # logger.debug(f"evaluations: {evaluations}")
-                tds = compute_tds(reward, evaluations)
+                predictions = self.predict_inputs(input_states)
+                # logger.debug(f"predictions: {predictions}")
+                tds = compute_tds(reward, predictions)
                 # logger.debug(f"tds: {tds}")
                 lambda_td = compute_lambda_td(tds, lambda_value)
                 # logger.debug(f"lambda_td: {lambda_td}")
@@ -95,12 +96,17 @@ class MLP(Model):
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
         
-        new_eval = self.evaluate_inputs(inputs)
-        logger.info(f"new_eval: {new_eval}")
+        new_predictions = self.predict_inputs(inputs)
+        logger.info(f"new_predictions: {new_predictions}")
+        
+        new_tds = compute_tds(reward, new_predictions)
+        new_lambda_tds = compute_lambda_tds(new_tds, lambda_value)
         
         return {
-            "old_eval": old_eval,
-            "new_eval": new_eval
+            "old_predictions": old_predictions,
+            "new_predictions": new_predictions,
+            "old_lambda_tds": old_lambda_tds,
+            "new_lambda_tds": new_lambda_tds
         }
 
 

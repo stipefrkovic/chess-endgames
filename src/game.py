@@ -147,16 +147,24 @@ class Game:
         # Learning
         logger.info("Training")
         if self.train:
-            evaluations = model.train(pv,
+            results = model.train(pv,
                                       steps=self.train_steps,
                                       lambda_value=self.lambda_value)
-            old_eval = evaluations.get("old_eval")
-            old_eval_loss = [abs(eval - pv.reward) for eval in old_eval]
-            self.write_results("old_eval_loss", old_eval_loss)
+            old_predictions = results.get("old_predictions")
+            old_prediction_loss = [pv.reward - pred for pred in old_predictions]
+            self.write_results("old_prediction_loss", old_prediction_loss)
             
-            new_eval = evaluations.get("new_eval")
-            new_eval_loss = [abs(eval - pv.reward) for eval in new_eval]
-            self.write_results("new_eval_loss", new_eval_loss)
+            new_predictions = results.get("new_predictions")
+            new_prediction_loss = [pv.reward - pred for pred in new_predictions]
+            self.write_results("new_prediction_loss", new_prediction_loss)
+
+            old_lambda_tds = results.get("old_lambda_tds")
+            self.write_results("old_lambda_td_loss", old_lambda_tds)
+
+            new_lambda_tds = results.get("new_lambda_tds")
+            self.write_results("new_lambda_td_loss", new_lambda_tds)
+
+# TODO results and plot class
 
     def write_results(self, results_name, results):
         results_file = open(f"{self.results_path}{self.name}_{results_name}.csv", 'a')
@@ -175,50 +183,52 @@ class Game:
         fig, ax = plt.subplots()
         ax.plot(range(1, len(reward_losses_1d)+1, 1), reward_losses_1d)
         plt.xticks(range(1, len(reward_losses_1d)+1, 1))
-        plt.xlabel('Game')
-        plt.ylabel('Reward Loss')
+        plt.xlabel('game')
+        plt.ylabel('reward_loss')
+        plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
         plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
         fig.savefig(f"{self.figures_path}{self.name}_reward_loss.png")
 
-    def plot_evaluation_losses(self):
-        df1 = pd.read_table(f"{self.results_path}{self.name}_old_eval_loss.csv", sep=",", names=list(range(self.max_depth+1)))
-        df2 = pd.read_table(f"{self.results_path}{self.name}_new_eval_loss.csv", sep=",", names=list(range(self.max_depth+1)))
+    def plot_old_new_state_losses(self, loss_name):
+        df1 = pd.read_table(f"{self.results_path}{self.name}_old_{loss_name}_loss.csv", sep=",", names=list(range(self.max_depth+1)))
+        df2 = pd.read_table(f"{self.results_path}{self.name}_new_{loss_name}_loss.csv", sep=",", names=list(range(self.max_depth+1)))
         
-        old_eval_loss = np.array(df1)
-        old_eval_loss_mean = np.nanmean(old_eval_loss, axis=0)
-        old_eval_loss_std = np.nanstd(old_eval_loss, axis=0)
-        new_eval_loss = np.array(df2)
-        new_eval_loss_mean = np.nanmean(new_eval_loss, axis=0)
-        new_eval_loss_std = np.nanstd(new_eval_loss, axis=0)
+        old_loss = np.array(df1)
+        old_loss_mean = np.nanmean(old_loss, axis=0)
+        old_loss_std = np.nanstd(old_loss, axis=0)
+        new_loss = np.array(df2)
+        new_loss_mean = np.nanmean(new_loss, axis=0)
+        new_loss_std = np.nanstd(new_loss, axis=0)
         
-        logger.info(f"old_eval_loss_mean: {old_eval_loss_mean}")
-        logger.info(f"old_eval_loss_std: {old_eval_loss_std}")
-        logger.info(f"new_eval_loss_mean: {new_eval_loss_mean}")
-        logger.info(f"new_eval_loss_std: {new_eval_loss_std}")
+        logger.info(f"old_{loss_name}_loss_mean: {old_loss_mean}")
+        logger.info(f"old_{loss_name}_loss_std: {old_loss_std}")
+        logger.info(f"new_{loss_name}_loss_mean: {new_loss_mean}")
+        logger.info(f"new_{loss_name}_loss_std: {new_loss_std}")
 
-        logger.info("Plotting evaluation losses")
+        logger.info(f"Plotting {loss_name} losses")
         fig, ax = plt.subplots()
         trans1 = Affine2D().translate(-0.1, 0.0) + ax.transData
         trans2 = Affine2D().translate(+0.1, 0.0) + ax.transData
-        plt.xlabel('State')
-        plt.ylabel('Evaluation Loss')
-        plt.xticks(range(len(old_eval_loss_mean)))   
-        ax.errorbar(range(len(old_eval_loss_mean)),
-                    old_eval_loss_mean,
-                    old_eval_loss_std,
+        plt.xlabel('state')
+        plt.ylabel(f'{loss_name}_loss')
+        plt.xticks(range(len(old_loss_mean)))
+        plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
+        ax.errorbar(range(len(old_loss_mean)),
+                    old_loss_mean,
+                    old_loss_std,
                     transform=trans1,
                     marker='o',
                     linestyle='none',
                     label='Before training')
-        ax.errorbar(range(len(new_eval_loss_mean)),
-                    new_eval_loss_mean,
-                    new_eval_loss_std,
+        ax.errorbar(range(len(new_loss_mean)),
+                    new_loss_mean,
+                    new_loss_std,
                     transform=trans2,
                     marker='o',
                     linestyle='none',
                     label='After training')
         ax.legend()
-        fig.savefig(f"{self.figures_path}{self.name}_eval_loss.png")
+        fig.savefig(f"{self.figures_path}{self.name}_{loss_name}_loss.png")
 
 
 class ChessGame(Game):
@@ -348,4 +358,5 @@ class GamePlayer:
             if i % save_every_n_iter == 0:
                 self.model.save_weights()
         game.plot_reward_losses()
-        game.plot_evaluation_losses()
+        game.plot_old_new_state_losses('prediction')
+        game.plot_old_new_state_losses('lambda_td')
