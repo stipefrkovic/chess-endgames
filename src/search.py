@@ -1,5 +1,6 @@
 import chess
 
+
 class Variation:
     def __init__(self, reward, state):
         self.reward = reward
@@ -10,7 +11,7 @@ class Variation:
 
     def get_states(self):
         return self.states
-    
+
     def get_reward(self):
         return self.reward
 
@@ -28,19 +29,19 @@ class ChessState():
 
     def copy(self):
         return ChessState(self.board.copy())
-    
+
     def max_turn(self):
         return self.board.turn is chess.WHITE
-    
+
     def get_actions(self):
         return self.board.legal_moves
-    
+
     def do_action(self, action):
         self.board.push(action)
 
     def undo_action(self):
         return self.board.pop()
-    
+
     def get_outcome(self):
         return self.board.outcome()
 
