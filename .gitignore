@@ -1,7 +1,7 @@
 /venv/
 /.idea/
 /src/__pycache__
-*.csv
-*.log
-*.png
-*.h5
+# *.csv
+# *.log
+# *.png
+# *.h5

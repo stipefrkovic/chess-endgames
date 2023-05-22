@@ -20,7 +20,7 @@ def queen_endgame_raw_train():
     )
     game_player.play_game(
         game=queen_endgame_game,
-        iterations=100,
+        iterations=1000,
         save_every_n_iter=50
     )
 

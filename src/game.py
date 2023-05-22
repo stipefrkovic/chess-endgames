@@ -6,6 +6,7 @@ import time
 import os
 from matplotlib import pyplot as plt
 from matplotlib.transforms import Affine2D
+from matplotlib.ticker import FormatStrFormatter
 from itertools import chain
 import numpy as np
 import pandas as pd
@@ -141,7 +142,7 @@ class Game:
         logger.info(f"real_reward: {start_state.real_reward}")
         logger.info(f"pv_reward: {pv.reward}")
 
-        reward_loss = abs(start_state.real_reward - pv.reward)
+        reward_loss = pv.reward - start_state.real_reward
         self.write_results("reward_loss", [reward_loss])
 
         # Learning
@@ -181,12 +182,14 @@ class Game:
 
         logger.info("Plotting reward losses")
         fig, ax = plt.subplots()
-        ax.plot(range(1, len(reward_losses_1d)+1, 1), reward_losses_1d)
-        plt.xticks(range(1, len(reward_losses_1d)+1, 1))
         plt.xlabel('game')
         plt.ylabel('reward_loss')
         plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
-        plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
+        # plt.xticks(range(1, len(reward_losses_1d)+1, 1))
+        # plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
+        ax.plot(range(1, len(reward_losses_1d)+1, 1), reward_losses_1d)
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
         fig.savefig(f"{self.figures_path}{self.name}_reward_loss.png")
 
     def plot_old_new_state_losses(self, loss_name):
