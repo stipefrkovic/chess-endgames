@@ -59,8 +59,8 @@ def rook_endgame_raw_train():
     chess_mlp = ChessMLP()
     game_player = GamePlayer(chess_mlp)
     game_player.set_up(
-        load_weights=False,
-        clear_dirs=True
+        load_weights=True,
+        clear_dirs=False
     )
 
     rook_endgame_game = RookEndgameGame(
