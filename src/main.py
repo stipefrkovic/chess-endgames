@@ -72,7 +72,7 @@ def rook_endgame_raw_train():
     )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=500,
+        iterations=1000,
         save_every_n_iter=50
     )
 
