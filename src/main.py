@@ -7,8 +7,8 @@ def queen_endgame_raw_train():
     chess_mlp = ChessMLP()
     game_player = GamePlayer(chess_mlp)
     game_player.set_up(
-        load_weights=False,
-        clear_dirs=True
+        load_weights=True,
+        clear_dirs=False
     )
 
     queen_endgame_game = QueenEndgameGame(
@@ -21,7 +21,7 @@ def queen_endgame_raw_train():
     game_player.play_game(
         game=queen_endgame_game,
         iterations=1000,
-        save_every_n_iter=50
+        save_every_n_iter=500
     )
 
     game_player.wrap_up(
