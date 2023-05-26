@@ -34,7 +34,7 @@ def rook_endgame_transfer_train():
     game_player = GamePlayer(chess_mlp)
     game_player.set_up(
         load_weights=True,
-        clear_dirs=True
+        clear_dirs=False
     )
 
     rook_endgame_game = RookEndgameGame(
