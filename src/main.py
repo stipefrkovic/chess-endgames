@@ -46,8 +46,8 @@ def rook_endgame_transfer_train():
     )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=500,
-        save_every_n_iter=50
+        iterations=1000,
+        save_every_n_iter=500
     )
 
     game_player.wrap_up(
