@@ -14,14 +14,14 @@ def queen_endgame_raw_train():
     queen_endgame_game = QueenEndgameGame(
         max_depth=5,
         train=True,
-        train_steps=15,
+        train_steps=25,
         lambda_value=0.9,
         name="queen_endgame_raw_train"
     )
     game_player.play_game(
         game=queen_endgame_game,
-        iterations=1000,
-        save_every_n_iter=100
+        iterations=100,
+        save_every_n_iter=1000
     )
 
     game_player.wrap_up(
@@ -40,14 +40,14 @@ def rook_endgame_transfer_train():
     rook_endgame_game = RookEndgameGame(
         max_depth=5,
         train=True,
-        train_steps=15,
+        train_steps=25,
         lambda_value=0.9,
         name="rook_endgame_transfer_train"
     )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=500,
-        save_every_n_iter=100
+        iterations=2000,
+        save_every_n_iter=1000
     )
 
     game_player.wrap_up(
@@ -59,20 +59,20 @@ def rook_endgame_raw_train():
     chess_mlp = ChessMLP()
     game_player = GamePlayer(chess_mlp)
     game_player.set_up(
-        load_weights=True,
-        clear_dirs=False
+        load_weights=False,
+        clear_dirs=True
     )
 
     rook_endgame_game = RookEndgameGame(
         max_depth=5,
         train=True,
-        train_steps=15,
+        train_steps=25,
         lambda_value=0.9,
         name="rook_endgame_raw_train"
     )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=3000,
+        iterations=2000,
         save_every_n_iter=1000
     )
 
