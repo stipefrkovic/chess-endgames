@@ -1,3 +1,4 @@
+from game import QueenEndgameGame
 
 def td_lambda_gradient_test():
     import tensorflow as tf
@@ -51,7 +52,17 @@ def td_lambda_gradient_test_2():
 
 
 def main():
-    pass
+    game = QueenEndgameGame(
+        max_depth=5,
+        train=True,
+        train_steps=15,
+        lambda_value=0.9,
+        name="queen_endgame_raw_train"
+    )
+    game.plot_reward_losses()
+    game.plot_old_new_state_losses('prediction')
+    game.plot_old_new_state_losses('lambda_td')
+
 
 if __name__ == "__main__":
     main()
