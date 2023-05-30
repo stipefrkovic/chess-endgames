@@ -247,7 +247,7 @@ class ChessGame(Game):
             board.set_piece_at(piece_square, pieces[1])
             other_king_square = random.choice(chess.SQUARES)
             board.set_piece_at(other_king_square, pieces[2])
-            if board.is_valid():
+            if board.is_valid() and len(board.piece_map()) == 3:
                 break
             else:
                 board.remove_piece_at(piece_square)
