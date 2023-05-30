@@ -12,15 +12,15 @@ def queen_endgame_raw_train():
     )
 
     queen_endgame_game = QueenEndgameGame(
-        max_depth=5,
+        max_depth=1,
         train=True,
-        train_steps=25,
+        train_steps=20,
         lambda_value=0.9,
         name="queen_endgame_raw_train"
     )
     game_player.play_game(
         game=queen_endgame_game,
-        iterations=100,
+        iterations=1000,
         save_every_n_iter=1000
     )
 

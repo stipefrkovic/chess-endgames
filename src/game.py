@@ -235,25 +235,26 @@ class Game:
 
 
 class ChessGame(Game):
-    # def create_random_chess_board(self, non_king_pieces, turn):
-    #     kings = [chess.Piece(chess.KING, chess.WHITE),
-    #              chess.Piece(chess.KING, chess.BLACK)]
-    #     pieces = kings + non_king_pieces
-    #     board = None
-    #     while True:
-    #         board = chess.Board().empty()
-    #         populated_squares = []
-    #         for piece in pieces:
-    #             while True:
-    #                 square = random.choice(chess.SQUARES)
-    #                 if square not in populated_squares:
-    #                     board.set_piece_at(square, piece)
-    #                     populated_squares.append(square)
-    #                     break
-    #         board.turn = turn
-    #         if board.is_valid():
-    #             break
-    #     return board
+    def create_random_chess_board(self, pieces, turn):
+        board = chess.Board().empty()
+        board.turn = turn
+
+        king_square = random.choice(chess.SQUARES)
+        board.set_piece_at(king_square, pieces[0])
+
+        while True:
+            piece_square = random.choice(chess.SQUARES)
+            board.set_piece_at(piece_square, pieces[1])
+            other_king_square = random.choice(chess.SQUARES)
+            board.set_piece_at(other_king_square, pieces[2])
+            if board.is_valid():
+                break
+            else:
+                board.remove_piece_at(piece_square)
+                board.remove_piece_at(other_king_square)
+                board.set_piece_at(king_square, pieces[0])
+        
+        return board
     
     def create_region_chess_board(self, pieces, turn):
         board = chess.Board().empty()
@@ -280,13 +281,13 @@ class ChessGame(Game):
 
         return board
     
-    def create_region_chess_state(self, piece):
+    def create_pieces(self, piece):
         winning_color = random.choice([chess.WHITE, chess.BLACK])
         first_king = chess.Piece(chess.KING, winning_color)
         first_king_piece = chess.Piece(piece, winning_color)
         other_king = chess.Piece(chess.KING, not winning_color)
         pieces = (first_king, first_king_piece, other_king)
-        board = self.create_region_chess_board(pieces, winning_color)
+        return pieces, winning_color
         return ChessState(board)
 
 
@@ -295,14 +296,10 @@ class RookEndgameGame(ChessGame):
         super().__init__(max_depth, train, train_steps, lambda_value, name)
 
     def play(self, model):
-        start_state = self.create_region_chess_state(chess.ROOK)
-        return super().play(model, start_state)
-
-    # def create_random_rook_endgame(self):
-    #     rooks = [chess.Piece(chess.ROOK, chess.WHITE),
-    #              chess.Piece(chess.ROOK, chess.BLACK)]
-    #     random_rook = random.choice(rooks)
-    #     return super().create_random_chess_board([random_rook], random_rook.color)
+        pieces, winning_color = self.create_pieces(chess.ROOK)
+        # board = self.create_region_chess_board(pieces, winning_color)
+        board = self.create_random_chess_board(pieces, winning_color)
+        return super().play(model, ChessState(board))
 
 
 class QueenEndgameGame(ChessGame):
@@ -310,14 +307,10 @@ class QueenEndgameGame(ChessGame):
         super().__init__(max_depth, train, train_steps, lambda_value, name)
 
     def play(self, model):
-        start_state = self.create_region_chess_state(chess.QUEEN)
-        return super().play(model, start_state)
-    
-    # def create_random_queen_endgame(self):
-    #     queens = [chess.Piece(chess.QUEEN, chess.WHITE),
-    #              chess.Piece(chess.QUEEN, chess.BLACK)]
-    #     queen = random.choice(queens)
-    #     return super().create_random_chess_board([queen], queen.color)
+        pieces, winning_color = self.create_pieces(chess.QUEEN)
+        # board = self.create_region_chess_board(pieces, winning_color)
+        board = self.create_random_chess_board(pieces, winning_color)
+        return super().play(model, ChessState(board))
 
 
 class GamePlayer:
