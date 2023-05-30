@@ -12,9 +12,9 @@ def queen_endgame_raw_train():
     )
 
     queen_endgame_game = QueenEndgameGame(
-        max_depth=1,
+        max_depth=5,
         train=True,
-        train_steps=20,
+        train_steps=15,
         lambda_value=0.9,
         name="queen_endgame_raw_train"
     )
@@ -25,7 +25,7 @@ def queen_endgame_raw_train():
     )
 
     game_player.wrap_up(
-        save_weights=True
+        save_weights=True 
     )
 
 
@@ -40,7 +40,7 @@ def rook_endgame_transfer_train():
     rook_endgame_game = RookEndgameGame(
         max_depth=5,
         train=True,
-        train_steps=25,
+        train_steps=15,
         lambda_value=0.9,
         name="rook_endgame_transfer_train"
     )
@@ -66,7 +66,7 @@ def rook_endgame_raw_train():
     rook_endgame_game = RookEndgameGame(
         max_depth=5,
         train=True,
-        train_steps=25,
+        train_steps=15,
         lambda_value=0.9,
         name="rook_endgame_raw_train"
     )
