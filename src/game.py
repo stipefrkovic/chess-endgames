@@ -129,7 +129,7 @@ class Game:
     def play(self, model, start_state):
         # Search
         logger.info("Searching")
-        logger.info(f"start_state:\n{start_state}")
+        logger.info(f"start_state: {start_state.string()}\n{start_state}")
         pv = alpha_beta(
             state=start_state,
             model=model,

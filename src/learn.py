@@ -54,13 +54,15 @@ class Model:
     def predict_inputs(self, inputs):
         predictions = []
         for inp in inputs:
-            prediction = self.predict(inp)
+            prediction = self.predict_input(inp)
             predictions.append(prediction)
         return predictions
 
-    def predict(self, x):
-        prediction = self.model(x)
+    def predict_input(self, inp):
+        prediction = self.model(inp.get("inp"))
         prediction = prediction.numpy().item(0)
+        if inp.get("turn") == "b":
+            prediction *= -1
         return prediction
 
 
@@ -72,33 +74,36 @@ class MLP(Model):
 
     def train(self, variation, steps, lambda_value):
         reward = variation.get_reward()
-        inputs = self.variation_to_inputs(variation)
         
+        inputs = self.variation_to_inputs(variation)
         old_predictions = self.predict_inputs(inputs)
         logger.info(f"old_predictions: {old_predictions}")
-        
         old_tds = compute_tds(reward, old_predictions)
         old_lambda_tds = compute_lambda_tds(old_tds, lambda_value)
         
         for step in range(steps):
-            input_states = inputs.copy()
-            while len(input_states) > 0:
-                predictions = self.predict_inputs(input_states)
+            inputs = self.variation_to_inputs(variation)
+            while len(inputs) > 0:
+                predictions = self.predict_inputs(inputs)
                 # logger.debug(f"predictions: {predictions}")
                 tds = compute_tds(reward, predictions)
                 # logger.debug(f"tds: {tds}")
                 lambda_td = compute_lambda_td(tds, lambda_value)
+                input = inputs.pop(0)
+                if input.get("turn") == "b":
+                    lambda_td *= -1
                 # logger.debug(f"lambda_td: {lambda_td}")
-                input_state = input_states.pop(0)
+                inp = input.get("inp")
+                # logger.debug(f"inp: {np.sum(inp)}")
                 with tf.GradientTape() as tape:
-                    predicted_value = self.model(input_state)
+                    predicted_value = self.model(inp)
                     predicted_value *= -lambda_td
                 gradients = tape.gradient(predicted_value, self.model.trainable_weights)
                 self.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
         
+        inputs = self.variation_to_inputs(variation)
         new_predictions = self.predict_inputs(inputs)
         logger.info(f"new_predictions: {new_predictions}")
-        
         new_tds = compute_tds(reward, new_predictions)
         new_lambda_tds = compute_lambda_tds(new_tds, lambda_value)
         
@@ -111,6 +116,7 @@ class MLP(Model):
 
 
 class ChessMLP(MLP):
+    # TODO add name to weights
     def __init__(self, model_weights_path='/src/weights/mlp_weights.h5'):
         super().__init__(model_weights_path)
 
@@ -123,10 +129,8 @@ class ChessMLP(MLP):
         logger.debug(f"Model Summary:\n{str(self.model.summary())}")
 
     def variation_to_inputs(self, variation):
-        return self.chess_states_to_model_inputs(variation.get_states())
-
-    def chess_states_to_model_inputs(self, chess_states):
-        inputs = [self.fen_to_model_input(chess_state.string()) for chess_state in chess_states]
+        fens = variation.get_states()
+        inputs = [self.fen_to_model_input(fen) for fen in fens]
         return inputs
 
     def fen_to_model_input(self, fen):
@@ -141,7 +145,10 @@ class ChessMLP(MLP):
                 inp = np.array(boards).reshape((1, 384))
                 if char == 'b':
                     inp = inp * -1
-                return inp
+                return {
+                    "inp": inp,
+                    "turn": char
+                }
             elif char == end_of_pieces:
                 check_turn = True
             elif char == next_row:

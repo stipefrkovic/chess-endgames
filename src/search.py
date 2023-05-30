@@ -2,9 +2,9 @@ import chess
 
 
 class Variation:
-    def __init__(self, reward, state):
+    def __init__(self, reward):
         self.reward = reward
-        self.states = [state]
+        self.states = []
 
     def add_state(self, state):
         self.states.insert(0, state)
@@ -48,7 +48,7 @@ class ChessState():
     def get_reward(self, outcome, model):
         if outcome is None:
             model_input = model.fen_to_model_input(self.string())
-            reward = model.predict(model_input)
+            reward = model.predict_input(model_input)
         elif outcome.winner is None:
             reward = 0
         elif outcome.winner is chess.WHITE:
@@ -64,10 +64,11 @@ def alpha_beta(state, model, depth, max_depth, alpha, beta):
     outcome = state.get_outcome()
     if depth is max_depth or outcome is not None:
         reward = state.get_reward(outcome, model)
-        variation = Variation(reward, state.copy())
+        variation = Variation(reward)
+        variation.add_state(state.string())
         return variation
     if state.max_turn():
-        principal_variation = Variation(-100, None)
+        principal_variation = Variation(-100)
         for action in state.get_actions():
             state.do_action(action)
             variation = alpha_beta(state, model, depth + 1, max_depth, alpha, beta)
@@ -77,7 +78,7 @@ def alpha_beta(state, model, depth, max_depth, alpha, beta):
                 break
             alpha = max(alpha, principal_variation.reward)
     else:
-        principal_variation = Variation(100, None)
+        principal_variation = Variation(100)
         for action in state.get_actions():
             state.do_action(action)
             variation = alpha_beta(state, model, depth + 1, max_depth, alpha, beta)
@@ -86,5 +87,5 @@ def alpha_beta(state, model, depth, max_depth, alpha, beta):
             if principal_variation.reward < alpha:
                 break
             beta = min(beta, principal_variation.reward)
-    principal_variation.add_state(state.copy())
+    principal_variation.add_state(state.string())
     return principal_variation

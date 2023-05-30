@@ -1,5 +1,7 @@
 import logging
 
+# TODO add name to logger file
+
 logger = logging.getLogger(__name__)
 
 # Create handlers
