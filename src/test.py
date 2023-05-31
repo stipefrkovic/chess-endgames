@@ -1,5 +1,3 @@
-from game import QueenEndgameGame
-
 def td_lambda_gradient_test():
     import tensorflow as tf
 
@@ -52,16 +50,19 @@ def td_lambda_gradient_test_2():
 
 
 def main():
-    game = QueenEndgameGame(
-        max_depth=5,
-        train=True,
-        train_steps=15,
-        lambda_value=0.9,
-        name="queen_endgame_raw_train"
-    )
-    game.plot_reward_losses()
-    game.plot_old_new_state_losses('prediction')
-    game.plot_old_new_state_losses('lambda_td')
+    import chess
+    board = chess.Board().empty()
+    board.set_piece_at(chess.F7, chess.Piece(chess.KING, chess.WHITE))
+    board.set_piece_at(chess.H7, chess.Piece(chess.QUEEN, chess.WHITE))
+    # board.set_piece_at(chess.F5, chess.Piece(chess.QUEEN, chess.WHITE))
+    board.set_piece_at(chess.H6, chess.Piece(chess.KING, chess.BLACK))
+    board.turn = chess.BLACK
+    print(board.is_valid())
+    print(board.outcome())
+    print(board.legal_moves)
+    for legal_move in board.legal_moves:
+        if board.is_capture(legal_move):
+            print('stalemate')
 
 
 if __name__ == "__main__":

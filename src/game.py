@@ -126,7 +126,7 @@ class Game:
         self.figures_path = str(Path().absolute()) + figures_path
         self.results_path = str(Path().absolute()) + results_path
 
-    def play(self, model, start_state):
+    def play(self, model, start_state, real_reward):
         # Search
         logger.info("Searching")
         logger.info(f"start_state: {start_state.string()}\n{start_state}")
@@ -139,10 +139,10 @@ class Game:
             beta=100
         )
         logger.info(f"end_state:\n{pv.get_states()[-1]}")
-        logger.info(f"real_reward: {start_state.real_reward}")
+        logger.info(f"real_reward: {real_reward}")
         logger.info(f"pv_reward: {pv.reward}")
 
-        reward_loss = pv.reward - start_state.real_reward
+        reward_loss = pv.reward - real_reward
         self.write_results("reward_loss", [reward_loss])
 
         # Learning
@@ -235,9 +235,9 @@ class Game:
 
 
 class ChessGame(Game):
-    def create_random_chess_board(self, pieces, turn):
+    def create_random_chess_board(self, pieces):
         board = chess.Board().empty()
-        board.turn = turn
+        board.turn = random.choice(chess.COLORS)
 
         king_square = random.choice(chess.SQUARES)
         board.set_piece_at(king_square, pieces[0])
@@ -247,15 +247,17 @@ class ChessGame(Game):
             board.set_piece_at(piece_square, pieces[1])
             other_king_square = random.choice(chess.SQUARES)
             board.set_piece_at(other_king_square, pieces[2])
-            if board.is_valid() and len(board.piece_map()) == 3:
-                break
+            if board.is_valid() and board.outcome() == None and all(not board.is_capture(legal_move) for legal_move in board.legal_moves):
+                real_reward = 1 if pieces[1].color else -1
+                # for legal_move in board.legal_moves:
+                #     if board.is_capture(legal_move):
+                #         real_reward = 0
+                return board, real_reward
             else:
                 board.remove_piece_at(piece_square)
                 board.remove_piece_at(other_king_square)
                 board.set_piece_at(king_square, pieces[0])
-        
-        return board
-    
+            
     def create_region_chess_board(self, pieces, turn):
         board = chess.Board().empty()
         board.turn = turn
@@ -287,30 +289,30 @@ class ChessGame(Game):
         first_king_piece = chess.Piece(piece, winning_color)
         other_king = chess.Piece(chess.KING, not winning_color)
         pieces = (first_king, first_king_piece, other_king)
-        return pieces, winning_color
-        return ChessState(board)
-
+        return pieces
 
 class RookEndgameGame(ChessGame):
     def __init__(self, max_depth, train, train_steps, lambda_value, name):
         super().__init__(max_depth, train, train_steps, lambda_value, name)
 
+    # TODO refractor into setup and play
     def play(self, model):
-        pieces, winning_color = self.create_pieces(chess.ROOK)
+        pieces = self.create_pieces(chess.ROOK)
         # board = self.create_region_chess_board(pieces, winning_color)
-        board = self.create_random_chess_board(pieces, winning_color)
-        return super().play(model, ChessState(board))
+        board, real_reward = self.create_random_chess_board(pieces)
+        return super().play(model, ChessState(board), real_reward)
 
 
 class QueenEndgameGame(ChessGame):
     def __init__(self, max_depth, train, train_steps, lambda_value, name):
         super().__init__(max_depth, train, train_steps, lambda_value, name)
 
+    # TODO refractor into setup and play
     def play(self, model):
-        pieces, winning_color = self.create_pieces(chess.QUEEN)
+        pieces = self.create_pieces(chess.QUEEN)
         # board = self.create_region_chess_board(pieces, winning_color)
-        board = self.create_random_chess_board(pieces, winning_color)
-        return super().play(model, ChessState(board))
+        board, real_reward = self.create_random_chess_board(pieces)
+        return super().play(model, ChessState(board), real_reward)
 
 
 class GamePlayer:
