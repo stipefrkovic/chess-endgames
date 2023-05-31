@@ -247,11 +247,11 @@ class ChessGame(Game):
             board.set_piece_at(piece_square, pieces[1])
             other_king_square = random.choice(chess.SQUARES)
             board.set_piece_at(other_king_square, pieces[2])
-            if board.is_valid() and board.outcome() == None:
+            if board.is_valid() and board.outcome() == None and all(not board.is_capture(legal_move) for legal_move in board.legal_moves):
                 real_reward = 1 if pieces[1].color else -1
-                for legal_move in board.legal_moves:
-                    if board.is_capture(legal_move):
-                        real_reward = 0
+                # for legal_move in board.legal_moves:
+                #     if board.is_capture(legal_move):
+                #         real_reward = 0
                 return board, real_reward
             else:
                 board.remove_piece_at(piece_square)
