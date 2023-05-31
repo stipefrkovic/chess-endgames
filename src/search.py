@@ -19,7 +19,6 @@ class Variation:
 class ChessState():
     def __init__(self, board):
         self.board = board
-        self.real_reward = 1 if self.max_turn() else -1
 
     def __str__(self):
         return self.board.__str__()
@@ -62,7 +61,7 @@ class ChessState():
 
 def alpha_beta(state, model, depth, max_depth, alpha, beta):
     outcome = state.get_outcome()
-    if depth is max_depth or outcome is not None:
+    if depth == max_depth or outcome != None:
         reward = state.get_reward(outcome, model)
         variation = Variation(reward)
         variation.add_state(state.string())
