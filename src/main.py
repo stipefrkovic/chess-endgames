@@ -46,7 +46,7 @@ def rook_endgame_transfer_train():
     )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=1000,
+        iterations=500,
         save_every_n_iter=1000
     )
 
@@ -64,7 +64,7 @@ def rook_endgame_raw_train():
     )
 
     rook_endgame_game = RookEndgameGame(
-        max_depth=6,
+        max_depth=5,
         train=True,
         train_steps=10,
         lambda_value=0.9,
@@ -72,8 +72,8 @@ def rook_endgame_raw_train():
     )
     game_player.play_game(
         game=rook_endgame_game,
-        iterations=1000,
-        save_every_n_iter=2000
+        iterations=500,
+        save_every_n_iter=1000
     )
 
     game_player.wrap_up(
