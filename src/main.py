@@ -38,7 +38,7 @@ def rook_endgame_transfer_train():
     )
 
     rook_endgame_game = RookEndgameGame(
-        max_depth=6,
+        max_depth=5,
         train=True,
         train_steps=10,
         lambda_value=0.9,
