@@ -174,32 +174,38 @@ class Game:
         results_file.close()
 
     def plot_reward_losses(self):
+        plt.rcParams.update({'font.size': 12})
+
         df = pd.read_table(f"{self.results_path}{self.name}_reward_loss.csv", sep=",", header=None)
         reward_loss_2d = np.array(df)
         reward_losses_1d = list(chain(*reward_loss_2d))
+        abs_reward_losses_1d = [abs(ele) for ele in reward_losses_1d]
 
-        logger.info(f"reward_loss_mean: {np.mean(reward_losses_1d)}")
+        logger.info(f"reward_loss_mean: {np.mean(abs_reward_losses_1d)}")
 
         logger.info("Plotting reward losses")
         fig, ax = plt.subplots()
-        plt.xlabel('game')
-        plt.ylabel('reward_loss')
+        plt.xlabel('Game')
+        plt.ylabel('Absolute difference between\nminimax evaluation and true evaluation')
         plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
         # plt.xticks(range(1, len(reward_losses_1d)+1, 1))
         # plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
-        ax.plot(range(1, len(reward_losses_1d)+1, 1), reward_losses_1d)
+        plt.tight_layout()
+        ax.plot(range(1, len(abs_reward_losses_1d)+1, 1), abs_reward_losses_1d)
         ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
 
-        fig.savefig(f"{self.figures_path}{self.name}_reward_loss.png")
+        fig.savefig(f"{self.figures_path}{self.name}_abs_evaluation_loss.png")
 
     def plot_old_new_state_losses(self, loss_name):
         df1 = pd.read_table(f"{self.results_path}{self.name}_old_{loss_name}_loss.csv", sep=",", names=list(range(self.max_depth+1)))
         df2 = pd.read_table(f"{self.results_path}{self.name}_new_{loss_name}_loss.csv", sep=",", names=list(range(self.max_depth+1)))
         
         old_loss = np.array(df1)
+        old_loss = np.abs(old_loss)
         old_loss_mean = np.nanmean(old_loss, axis=0)
         old_loss_std = np.nanstd(old_loss, axis=0)
         new_loss = np.array(df2)
+        new_loss = np.abs(new_loss)
         new_loss_mean = np.nanmean(new_loss, axis=0)
         new_loss_std = np.nanstd(new_loss, axis=0)
         
@@ -212,8 +218,10 @@ class Game:
         fig, ax = plt.subplots()
         trans1 = Affine2D().translate(-0.1, 0.0) + ax.transData
         trans2 = Affine2D().translate(+0.1, 0.0) + ax.transData
-        plt.xlabel('state')
-        plt.ylabel(f'{loss_name}_loss')
+        # plt.xlabel('state')
+        # plt.ylabel(f'{loss_name}_loss')
+        plt.xlabel('Position index in game')
+        plt.ylabel(f'Mean absolute difference between\n minimax evaluation and true evaluation ± 1 std')
         plt.xticks(range(len(old_loss_mean)))
         plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
         ax.errorbar(range(len(old_loss_mean)),
@@ -231,7 +239,9 @@ class Game:
                     linestyle='none',
                     label='After training')
         ax.legend()
-        fig.savefig(f"{self.figures_path}{self.name}_{loss_name}_loss.png")
+        plt.tight_layout()
+        # fig.savefig(f"{self.figures_path}{self.name}_{loss_name}_loss.png")
+        fig.savefig(f"{self.figures_path}{self.name}_old_new_evaluation_loss.png")
 
 
 class ChessGame(Game):
