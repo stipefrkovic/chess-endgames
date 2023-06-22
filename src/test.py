@@ -102,7 +102,7 @@ def plot_reward_losses():
     logger.info("Plotting reward losses")
     fig, ax = plt.subplots()
     plt.xlabel('Training game')
-    plt.ylabel("Absolute error between program's\n evaluation and true evaluation")
+    plt.ylabel("Absolute error between minimax\n evaluation and true evaluation")
     plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
     # plt.xticks(range(1, len(reward_losses_1d)+1, 1))
     # plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
