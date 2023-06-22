@@ -81,14 +81,68 @@ def rook_endgame_raw_train():
     )
 
 
+def rook_endgame_trained_test():
+    chess_mlp = ChessMLP()
+    game_player = GamePlayer(chess_mlp)
+    game_player.set_up(
+        load_weights=True,
+        clear_dirs=False
+    )
+
+    rook_endgame_game = RookEndgameGame(
+        max_depth=5,
+        train=False,
+        train_steps=10,
+        lambda_value=0.9,
+        name="rook_endgame_trained_test"
+    )
+    game_player.play_game(
+        game=rook_endgame_game,
+        iterations=100,
+        save_every_n_iter=1000
+    )
+
+    game_player.wrap_up(
+        save_weights=False
+    )
+
+
+def rook_endgame_raw_test():
+    chess_mlp = ChessMLP()
+    game_player = GamePlayer(chess_mlp)
+    game_player.set_up(
+        load_weights=False,
+        clear_dirs=False
+    )
+
+    rook_endgame_game = RookEndgameGame(
+        max_depth=5,
+        train=False,
+        train_steps=10,
+        lambda_value=0.9,
+        name="rook_endgame_raw_test"
+    )
+    game_player.play_game(
+        game=rook_endgame_game,
+        iterations=100,
+        save_every_n_iter=1000
+    )
+
+    game_player.wrap_up(
+        save_weights=False
+    )
+
+
 def main():
     experiments = {
         "1": queen_endgame_raw_train,
         "2": rook_endgame_transfer_train,
         "3": rook_endgame_raw_train,
+        "4": rook_endgame_trained_test,
+        "5": rook_endgame_raw_test
     }
     parser = argparse.ArgumentParser(prog='main.py')
-    parser.add_argument('-e', '--experiment', choices=('1', '2', '3'), required=True)
+    parser.add_argument('-e', '--experiment', choices=('1', '2', '3', '4', '5'), required=True)
     args = parser.parse_args()
     experiments[args.experiment]()
 
