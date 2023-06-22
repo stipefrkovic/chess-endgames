@@ -48,6 +48,11 @@ def td_lambda_gradient_test_2():
     y = layer(x)
     print("Output: " + str(y))
 
+
+from pathlib import Path
+results_path = str(Path().absolute()) + '/src/results/'
+figures_path = str(Path().absolute()) + '/src/figures/'
+
 def queen_abs_evaluation():
     from game import QueenEndgameGame
     queen_endgame_game = QueenEndgameGame(
@@ -71,7 +76,6 @@ def queen_abs_evaluation_2():
     queen_endgame_game.plot_old_new_state_losses('lambda_td')
 
 def plot_reward_losses():
-    from pathlib import Path
     from matplotlib import pyplot as plt
     from matplotlib.transforms import Affine2D
     from matplotlib.ticker import FormatStrFormatter
@@ -80,9 +84,6 @@ def plot_reward_losses():
     import pandas as pd
     from logger import logger
     plt.rcParams.update({'font.size': 12})
-    
-    results_path = str(Path().absolute()) + '/src/results/'
-    figures_path = str(Path().absolute()) + '/src/figures/'
     
     raw_name = "rook_endgame_raw_train"
     raw_df = pd.read_table(f"{results_path}{raw_name}_reward_loss.csv", sep=",", header=None)
@@ -100,20 +101,51 @@ def plot_reward_losses():
 
     logger.info("Plotting reward losses")
     fig, ax = plt.subplots()
-    plt.xlabel('Game')
-    plt.ylabel('Absolute difference between\nminimax evaluation and true evaluation')
+    plt.xlabel('Training game')
+    plt.ylabel("Absolute error between program's\n evaluation and true evaluation")
     plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
     # plt.xticks(range(1, len(reward_losses_1d)+1, 1))
     # plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
     plt.tight_layout()
-    ax.plot(range(1, len(raw_abs_reward_losses_1d)+1, 1), raw_abs_reward_losses_1d, label="Random initial weights")
-    ax.plot(range(1, len(transfer_abs_reward_losses_1d)+1, 1), transfer_abs_reward_losses_1d, label="Pre-trained weights")
+    ax.plot(range(1, len(raw_abs_reward_losses_1d)+1, 1), raw_abs_reward_losses_1d, label="Baseline")
+    ax.plot(range(1, len(transfer_abs_reward_losses_1d)+1, 1), transfer_abs_reward_losses_1d, label="Transfer")
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
     ax.legend()
     fig.savefig(f"{figures_path}baseline_transfer_abs_evaluation_loss.png")
 
 
+def t_test():    
+    from pathlib import Path
+    from itertools import chain
+    import numpy as np
+    import pandas as pd
+    from logger import logger
+    from scipy import stats
+    
+    name1 = "rook_endgame_trained_test_reward_loss"
+    logger.info(f"{name1}")
+    df1 = pd.read_table(f"{results_path}{name1}.csv", sep=",", header=None)
+    reward_loss_2d_1 = np.array(df1)
+    reward_losses_1d_1 = list(chain(*reward_loss_2d_1))
+    abs_reward_losses_1d_1 = [abs(ele) for ele in reward_losses_1d_1]
+    logger.info(f"mean1: {np.mean(abs_reward_losses_1d_1)}")
+    logger.info(f"std1: {np.std(abs_reward_losses_1d_1)}")
+    logger.info(f"sem1: {stats.sem(abs_reward_losses_1d_1)}")
+
+    name2 = "rook_endgame_transfer_post_test_reward_loss"
+    logger.info(f"{name2}")
+    df2 = pd.read_table(f"{results_path}{name2}.csv", sep=",", header=None)
+    reward_loss_2d_2 = np.array(df2)
+    reward_losses_1d_2 = list(chain(*reward_loss_2d_2))
+    abs_reward_losses_1d_2 = [abs(ele) for ele in reward_losses_1d_2]
+    logger.info(f"mean2: {np.mean(abs_reward_losses_1d_2)}")
+    logger.info(f"std2: {np.std(abs_reward_losses_1d_2)}")
+    logger.info(f"sem2: {stats.sem(abs_reward_losses_1d_2)}")
+
+    logger.info(stats.ttest_ind(abs_reward_losses_1d_1, abs_reward_losses_1d_2, equal_var=False))
+
 def main():
+    t_test()
     queen_abs_evaluation()
     queen_abs_evaluation_2()
     plot_reward_losses()

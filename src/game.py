@@ -185,8 +185,8 @@ class Game:
 
         logger.info("Plotting reward losses")
         fig, ax = plt.subplots()
-        plt.xlabel('Game')
-        plt.ylabel('Absolute difference between\nminimax evaluation and true evaluation')
+        plt.xlabel('Training game')
+        plt.ylabel("Absolute error between program's\n evaluation and true evaluation")
         plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
         # plt.xticks(range(1, len(reward_losses_1d)+1, 1))
         # plt.ylim(min(reward_losses_1d) - 0.1, max(reward_losses_1d) + 0.1)
@@ -220,8 +220,8 @@ class Game:
         trans2 = Affine2D().translate(+0.1, 0.0) + ax.transData
         # plt.xlabel('state')
         # plt.ylabel(f'{loss_name}_loss')
-        plt.xlabel('Position index in game')
-        plt.ylabel(f'Mean absolute difference between\n minimax evaluation and true evaluation ± 1 std')
+        plt.xlabel('Position index in training game')
+        plt.ylabel(f"Mean absolute error between program's\n evaluation and true evaluation ± 1 std")
         plt.xticks(range(len(old_loss_mean)))
         plt.axhline(0, color='black', linestyle='dashed', linewidth=1)
         ax.errorbar(range(len(old_loss_mean)),
