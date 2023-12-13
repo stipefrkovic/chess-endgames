@@ -1,4 +1,4 @@
-# Chess endgames
+# Chess Endgames
 
 This project was done for the thesis of the Bachelor of Science degree in Artificial Intelligence at the University of Groningen.
 
